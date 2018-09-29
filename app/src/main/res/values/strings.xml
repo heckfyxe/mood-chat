@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Mood Chat</string>
+
+    <integer name="com_vk_sdk_AppId">6702897</integer>
+
+    <string name="auth_error">Auth error</string>
+    <string name="sign_out">Sign out</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="search">Search</string>
+    <string name="chats">Chats</string>
+    <string name="friends">Friends</string>
+    <string name="connection_error">Connection error</string>
+    <string name="retry">Retry</string>
+    <string name="user_avatar">User avatar</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="loading_error">loading error</string>
+
+</resources>
