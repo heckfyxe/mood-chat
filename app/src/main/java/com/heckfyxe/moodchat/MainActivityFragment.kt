@@ -1,8 +1,11 @@
 package com.heckfyxe.moodchat
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import com.vk.sdk.VKSdk
 import kotlinx.android.synthetic.main.fragment_main.*
 
 class MainActivityFragment : androidx.fragment.app.Fragment() {
@@ -63,15 +66,29 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
             when (item.itemId) {
                 R.id.ic_sign_out -> {
-
+                    VKSdk.logout()
+                    activity!!.setResult(Activity.RESULT_OK)
+                    activity!!.finish()
                     true
                 }
                 else -> false
             }
 
-    private fun replaceContent(fragment: androidx.fragment.app.Fragment = androidx.fragment.app.Fragment()) {
-        activity?.supportFragmentManager!!.beginTransaction()
-                .replace(R.id.content_fragment_container, fragment)
+    private fun replaceContent(fragment: Fragment = Fragment()) {
+        val fm = activity!!.supportFragmentManager
+        val fmFragment = fm.findFragmentById(R.id.content_fragment_container)
+        if (fmFragment == null)
+            fm.beginTransaction()
+                .add(R.id.content_fragment_container, fragment)
                 .commit()
+        else {
+            if (fragment is SearchFragment && fmFragment is SearchFragment) {  //TODO()
+                return
+            }
+
+            fm.beginTransaction()
+                    .replace(R.id.content_fragment_container, fragment)
+                    .commit()
+        }
     }
 }

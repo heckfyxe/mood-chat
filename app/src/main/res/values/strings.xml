@@ -14,5 +14,6 @@
     <string name="user_avatar">User avatar</string>
     <string name="enter_your_name">Enter your name</string>
     <string name="loading_error">loading error</string>
+    <string name="not_found_anything">Not found anything</string>
 
 </resources>

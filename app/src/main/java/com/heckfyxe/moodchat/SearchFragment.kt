@@ -6,10 +6,11 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.heckfyxe.moodchat.adapters.UserAdapter
-import com.vk.sdk.api.*
-import com.vk.sdk.api.model.VKUsersArray
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.processors.PublishProcessor
@@ -17,7 +18,7 @@ import kotlinx.android.synthetic.main.recycler_view.*
 import java.util.concurrent.TimeUnit
 
 
-class SearchFragment : androidx.fragment.app.Fragment() {
+class SearchFragment : Fragment() {
 
     companion object {
         private const val TAG = "SearchFragment"
@@ -32,36 +33,44 @@ class SearchFragment : androidx.fragment.app.Fragment() {
 
     private var searchQuery = ""
     private val searchProcessor = PublishProcessor.create<String>()
-    private lateinit var disposable: Disposable
+    private var disposables = mutableListOf<Disposable>()
+    private lateinit var viewModel: SearchFragmentViewModel
 
-    private val vkRequestListener by lazy { object : VKRequest.VKRequestListener() {
-
-        override fun onComplete(response: VKResponse) {
-            val users = VKUsersArray().apply {
-                parse(response.json)
-            }
-
-            adapter.users.clear()
-            adapter.users.addAll(users)
-            adapter.notifyDataSetChanged()
-        }
-
-        override fun onError(error: VKError) {
-            Log.e(TAG, error.apiError.errorMessage)
-            Toast.makeText(activity, R.string.loading_error, Toast.LENGTH_SHORT).show()
-        }
-    }}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        disposable = searchProcessor
+        adapter = UserAdapter()
+
+        disposables.add(searchProcessor
                 .debounce(335, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe{
+                    showProgressBar()
                     searchQuery = it
-                    updateUsers(searchQuery)
-                }
+                    viewModel.updateUsers(searchQuery)
+                })
+
+        viewModel = ViewModelProviders.of(this).get(SearchFragmentViewModel::class.java)
+
+        viewModel.usersLiveData.observe(this, Observer {
+            hideProgressBar()
+            hideNotFoundText()
+
+            if (it.error != null) {
+                Log.e(SearchFragment.TAG, it!!.error?.apiError?.errorMessage)
+                Toast.makeText(activity, R.string.loading_error, Toast.LENGTH_SHORT).show()
+                return@Observer
+            }
+
+            adapter.users.clear()
+            if (it.result!!.isNotEmpty()) {
+                adapter.users.addAll(it.result!!)
+            } else {
+                showNotFoundText()
+            }
+            adapter.notifyDataSetChanged()
+        })
 
         setHasOptionsMenu(true)
     }
@@ -75,25 +84,34 @@ class SearchFragment : androidx.fragment.app.Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = UserAdapter()
-
         recycler_view?.layoutManager = LinearLayoutManager(context)
         recycler_view?.adapter = adapter
         recycler_view?.setHasFixedSize(true)
 
-        searchProcessor.onNext(searchQuery)
+        if (viewModel.usersLiveData.value?.result == null)
+            searchProcessor.onNext(searchQuery)
     }
 
-    private fun updateUsers(q: String?) {
-        if (q != null && q.isNotEmpty()) {
-            VKApi.users().search(VKParameters(mapOf(
-                    VKApiConst.Q to q,
-                    VKApiConst.FIELDS to "photo_50")))
-        } else {
-            VKApi.users().search(VKParameters(mapOf(
-                    VKApiConst.FIELDS to "photo_50"
-            )))
-        }.executeWithListener(vkRequestListener)
+    private fun showProgressBar() {
+        recycler_view?.visibility = View.GONE
+        progressBar?.visibility = View.VISIBLE
+    }
+
+    private fun hideProgressBar() {
+        recycler_view?.visibility = View.VISIBLE
+        progressBar?.visibility = View.INVISIBLE
+    }
+
+    private fun showNotFoundText() {
+        recycler_view?.visibility = View.GONE
+        progressBar?.visibility = View.INVISIBLE
+        recyclerTextView?.visibility = View.VISIBLE
+    }
+
+    private fun hideNotFoundText() {
+        recyclerTextView?.visibility = View.INVISIBLE
+        progressBar?.visibility = View.INVISIBLE
+        recycler_view?.visibility = View.VISIBLE
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -107,6 +125,7 @@ class SearchFragment : androidx.fragment.app.Fragment() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 searchQuery = newText
+                Log.i("SearchFragment", "OnTextChanged")
                 searchProcessor.onNext(searchQuery)
                 return true
             }
@@ -129,8 +148,9 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         super.onDestroy()
 
         searchProcessor.onComplete()
-        Log.i("Disposable" , disposable.isDisposed.toString())
-        if (!disposable.isDisposed)
-            disposable.dispose()
+        disposables.forEach { disposable ->
+            if (!disposable.isDisposed)
+                disposable.dispose()
+        }
     }
 }
