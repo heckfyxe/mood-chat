@@ -6,10 +6,8 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.heckfyxe.moodchat.adapters.UserAdapter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -18,7 +16,7 @@ import kotlinx.android.synthetic.main.recycler_view.*
 import java.util.concurrent.TimeUnit
 
 
-class SearchFragment : Fragment() {
+class SearchFragment : androidx.fragment.app.Fragment() {
 
     companion object {
         private const val TAG = "SearchFragment"
@@ -36,6 +34,8 @@ class SearchFragment : Fragment() {
     private var disposables = mutableListOf<Disposable>()
     private lateinit var viewModel: SearchFragmentViewModel
 
+    private var isAdvancedLoading = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +44,7 @@ class SearchFragment : Fragment() {
 
         disposables.add(searchProcessor
                 .debounce(335, TimeUnit.MILLISECONDS)
+                .onBackpressureLatest()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe{
                     showProgressBar()
@@ -54,22 +55,30 @@ class SearchFragment : Fragment() {
         viewModel = ViewModelProviders.of(this).get(SearchFragmentViewModel::class.java)
 
         viewModel.usersLiveData.observe(this, Observer {
+            if (it == null)
+                return@Observer
+
             hideProgressBar()
             hideNotFoundText()
 
             if (it.error != null) {
-                Log.e(SearchFragment.TAG, it!!.error?.apiError?.errorMessage)
+                Log.e(TAG, it.error?.apiError?.errorMessage)
                 Toast.makeText(activity, R.string.loading_error, Toast.LENGTH_SHORT).show()
                 return@Observer
             }
 
-            adapter.users.clear()
-            if (it.result!!.isNotEmpty()) {
-                adapter.users.addAll(it.result!!)
+            if (!it.isAdvanced) {
+                if (it.result!!.isNotEmpty()) {
+                    adapter.replaceUsers(it.result!!)
+                } else {
+                    adapter.clear()
+                    showNotFoundText()
+                }
             } else {
-                showNotFoundText()
+                adapter.hideLoadingView()
+                isAdvancedLoading = false
+                adapter.insertUsers(*it.result!!.toTypedArray())
             }
-            adapter.notifyDataSetChanged()
         })
 
         setHasOptionsMenu(true)
@@ -84,9 +93,20 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recycler_view?.layoutManager = LinearLayoutManager(context)
+        recycler_view?.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
         recycler_view?.adapter = adapter
         recycler_view?.setHasFixedSize(true)
+        recycler_view?.addOnScrollListener(object: androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: androidx.recyclerview.widget.RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+
+                if (!recyclerView.canScrollVertically(1) && !isAdvancedLoading) {
+                    isAdvancedLoading = true
+                    adapter.showLoadingView()
+                    viewModel.loadNextUsers(searchQuery)
+                }
+            }
+        })
 
         if (viewModel.usersLiveData.value?.result == null)
             searchProcessor.onNext(searchQuery)
@@ -94,6 +114,7 @@ class SearchFragment : Fragment() {
 
     private fun showProgressBar() {
         recycler_view?.visibility = View.GONE
+        recyclerTextView?.visibility = View.INVISIBLE
         progressBar?.visibility = View.VISIBLE
     }
 
@@ -110,15 +131,14 @@ class SearchFragment : Fragment() {
 
     private fun hideNotFoundText() {
         recyclerTextView?.visibility = View.INVISIBLE
-        progressBar?.visibility = View.INVISIBLE
         recycler_view?.visibility = View.VISIBLE
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.fragment_search, menu)
 
-        val searchView = menu.findItem(R.id.action_search).actionView as SearchView
-        searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
+        val searchView = menu.findItem(R.id.action_search)?.actionView as? SearchView
+        searchView?.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
             }

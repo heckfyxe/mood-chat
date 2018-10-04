@@ -1,10 +1,8 @@
 package com.heckfyxe.moodchat
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import com.vk.sdk.VKSdk
 import kotlinx.android.synthetic.main.fragment_main.*
 
@@ -67,14 +65,14 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
             when (item.itemId) {
                 R.id.ic_sign_out -> {
                     VKSdk.logout()
-                    activity!!.setResult(Activity.RESULT_OK)
+                    activity!!.setResult(AppCompatActivity.RESULT_OK)
                     activity!!.finish()
                     true
                 }
                 else -> false
             }
 
-    private fun replaceContent(fragment: Fragment = Fragment()) {
+    private fun replaceContent(fragment: androidx.fragment.app.Fragment = androidx.fragment.app.Fragment()) {
         val fm = activity!!.supportFragmentManager
         val fmFragment = fm.findFragmentById(R.id.content_fragment_container)
         if (fmFragment == null)
