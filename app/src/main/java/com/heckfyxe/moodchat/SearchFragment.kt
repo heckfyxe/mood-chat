@@ -75,6 +75,10 @@ class SearchFragment : androidx.fragment.app.Fragment() {
                     showNotFoundText()
                 }
             } else {
+                // activity have recreated
+                if (adapter.size() == 0) {
+                    adapter.insertUsers(*it.data?.toTypedArray() ?: emptyArray())
+                }
                 adapter.hideLoadingView()
                 isAdvancedLoading = false
                 adapter.insertUsers(*it.result!!.toTypedArray())
@@ -96,6 +100,7 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         recycler_view?.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
         recycler_view?.adapter = adapter
         recycler_view?.setHasFixedSize(true)
+        recycler_view?.isVerticalScrollBarEnabled = true
         recycler_view?.addOnScrollListener(object: androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: androidx.recyclerview.widget.RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
@@ -111,6 +116,8 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         if (viewModel.usersLiveData.value?.result == null)
             searchProcessor.onNext(searchQuery)
     }
+
+
 
     private fun showProgressBar() {
         recycler_view?.visibility = View.GONE

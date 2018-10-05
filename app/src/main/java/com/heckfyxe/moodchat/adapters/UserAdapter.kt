@@ -86,10 +86,10 @@ class UserAdapter: RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerVie
     }
 
     fun size(): Int =
-            if (users.last() == null)
-                users.size - 1
+            if (users.isEmpty())
+                0
             else
-                users.size
+                users.filter { it != null}.size
 
 }
 
@@ -99,7 +99,9 @@ class UserViewHolder(view: View): RecyclerView.ViewHolder(view) {
         val photoUrl = user.photo_50
 
         Glide.with(itemView)
-                .setDefaultRequestOptions(RequestOptions.circleCropTransform())
+                .setDefaultRequestOptions(RequestOptions
+                        .circleCropTransform()
+                        .placeholder(R.drawable.ic_user))
                 .load(photoUrl)
                 .into(itemView.userAvatar)
 

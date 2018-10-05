@@ -26,7 +26,16 @@ class SearchFragmentViewModel: ViewModel() {
 
     fun loadNextUsers(q: String?) {
         loadUsers(q).executeWithListener(VKRequestCompletedListener {
-            usersLiveData.postValue(UsersListResult(result = it, isAdvanced = true))
+            usersLiveData.postValue(UsersListResult(
+                    result = it,
+                    isAdvanced = true,
+                    data = with(usersLiveData.value!!){
+                        if (isAdvanced) {
+                            listOf(*data!!.toTypedArray(), *result!!.toTypedArray())
+                        } else {
+                            result
+                        }
+                    }))
         })
     }
 
@@ -50,7 +59,8 @@ class SearchFragmentViewModel: ViewModel() {
     class UsersListResult (
         var error: VKError? = null,
         var result: List<VKApiUserFull>? = null,
-        var isAdvanced: Boolean = false
+        var isAdvanced: Boolean = false,
+        var data: List<VKApiUserFull>? = null  // previously loaded users if it's next users
     )
 
     private inner class VKRequestCompletedListener(val onCompleted: (VKUsersArray) -> Unit):
@@ -61,7 +71,7 @@ class SearchFragmentViewModel: ViewModel() {
                 parse(response.json)
             }
 
-            offset += users.size
+            offset += COUNT
 
             onCompleted(users)
         }
