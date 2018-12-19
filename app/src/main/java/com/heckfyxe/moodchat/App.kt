@@ -1,16 +1,24 @@
 package com.heckfyxe.moodchat
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.multidex.MultiDexApplication
 import com.vk.sdk.VKAccessToken
 import com.vk.sdk.VKAccessTokenTracker
 import com.vk.sdk.VKSdk
+import org.koin.android.ext.android.startKoin
 
-class App: MultiDexApplication() {
+
+class App : MultiDexApplication() {
 
     private val vkAccessTokenTracker: VKAccessTokenTracker = object : VKAccessTokenTracker() {
         override fun onVKAccessTokenChanged(oldToken: VKAccessToken?, newToken: VKAccessToken?) {
             if (newToken == null) {
-
+                Toast.makeText(this@App, "AccessToken invalidated", Toast.LENGTH_LONG)
+                    .show()
+                val intent = Intent(this@App, AuthActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(intent)
             }
         }
     }
@@ -18,14 +26,10 @@ class App: MultiDexApplication() {
     override fun onCreate() {
         super.onCreate()
 
+        startKoin(this, listOf(koinModule))
+
         vkAccessTokenTracker.startTracking()
 
         VKSdk.initialize(applicationContext)
-    }
-
-    override fun onTerminate() {
-        super.onTerminate()
-
-        vkAccessTokenTracker.stopTracking()
     }
 }

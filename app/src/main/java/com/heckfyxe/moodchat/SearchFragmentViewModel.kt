@@ -3,11 +3,11 @@ package com.heckfyxe.moodchat
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.heckfyxe.moodchat.model.User
 import com.vk.sdk.api.*
-import com.vk.sdk.api.model.VKApiUserFull
 import com.vk.sdk.api.model.VKUsersArray
 
-class SearchFragmentViewModel: ViewModel() {
+class SearchFragmentViewModel : ViewModel() {
 
     companion object {
         const val COUNT = 20
@@ -19,52 +19,54 @@ class SearchFragmentViewModel: ViewModel() {
 
     fun updateUsers(q: String?) {
         offset = 0
-        loadUsers(q).executeWithListener(VKRequestCompletedListener {
-            usersLiveData.postValue(UsersListResult(result = it))
+        loadUsers(q).executeWithListener(VKRequestCompletedListener { users ->
+            usersLiveData.postValue(UsersListResult(result = users.map { User(it) }))
         })
     }
 
     fun loadNextUsers(q: String?) {
-        loadUsers(q).executeWithListener(VKRequestCompletedListener {
-            usersLiveData.postValue(UsersListResult(
-                    result = it,
+        loadUsers(q).executeWithListener(VKRequestCompletedListener { users ->
+            usersLiveData.postValue(
+                UsersListResult(
+                    result = users.map { User(it) },
                     isAdvanced = true,
-                    data = with(usersLiveData.value!!){
+                    data = with(usersLiveData.value!!) {
                         if (isAdvanced) {
                             listOf(*data!!.toTypedArray(), *result!!.toTypedArray())
                         } else {
                             result
                         }
-                    }))
+                    })
+            )
         })
     }
 
     private fun loadUsers(q: String?): VKRequest {
         Log.i("offset", offset.toString())
-        return if (q != null && q.isNotEmpty())
-            VKApi.users().search(VKParameters(mapOf(
-                    VKApiConst.Q to q,
-                    VKApiConst.OFFSET to offset,
-                    VKApiConst.COUNT to COUNT,
-                    VKApiConst.FIELDS to "photo_50")))
-        else
-            VKApi.users().search(VKParameters(mapOf(
-                    VKApiConst.OFFSET to offset,
-                    VKApiConst.COUNT to COUNT,
-                    VKApiConst.FIELDS to "photo_50")))
+        val params = VKParameters(
+            mapOf(
+                VKApiConst.OFFSET to offset,
+                VKApiConst.COUNT to COUNT,
+                VKApiConst.FIELDS to "photo_50, online, photo_100"
+            )
+        )
 
+        if (q != null && q.isNotEmpty())
+            params[VKApiConst.Q] = q
+
+        return VKApi.users().search(params)
     }
 
 
-    class UsersListResult (
+    class UsersListResult(
         var error: VKError? = null,
-        var result: List<VKApiUserFull>? = null,
+        var result: List<User>? = null,
         var isAdvanced: Boolean = false,
-        var data: List<VKApiUserFull>? = null  // previously loaded users if it's next users
+        var data: List<User>? = null  // previously loaded users if it's next users
     )
 
-    private inner class VKRequestCompletedListener(val onCompleted: (VKUsersArray) -> Unit):
-            VKRequest.VKRequestListener() {
+    private inner class VKRequestCompletedListener(val onCompleted: (VKUsersArray) -> Unit) :
+        VKRequest.VKRequestListener() {
 
         override fun onComplete(response: VKResponse) {
             val users = VKUsersArray().apply {

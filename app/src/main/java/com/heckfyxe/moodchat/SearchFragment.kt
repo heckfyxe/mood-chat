@@ -8,12 +8,11 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.heckfyxe.moodchat.adapters.UserAdapter
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.processors.PublishProcessor
-import kotlinx.android.synthetic.main.recycler_view.*
-import java.util.concurrent.TimeUnit
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.heckfyxe.moodchat.adapter.UserAdapter
+import kotlinx.android.synthetic.main.fragment_search.*
+import kotlinx.coroutines.*
 
 
 class SearchFragment : androidx.fragment.app.Fragment() {
@@ -24,14 +23,13 @@ class SearchFragment : androidx.fragment.app.Fragment() {
 
         @JvmStatic
         fun newInstance() =
-                SearchFragment()
+            SearchFragment()
     }
 
     private lateinit var adapter: UserAdapter
 
     private var searchQuery = ""
-    private val searchProcessor = PublishProcessor.create<String>()
-    private var disposables = mutableListOf<Disposable>()
+    private var job = Job()
     private lateinit var viewModel: SearchFragmentViewModel
 
     private var isAdvancedLoading = false
@@ -41,16 +39,6 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         super.onCreate(savedInstanceState)
 
         adapter = UserAdapter()
-
-        disposables.add(searchProcessor
-                .debounce(335, TimeUnit.MILLISECONDS)
-                .onBackpressureLatest()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe{
-                    showProgressBar()
-                    searchQuery = it
-                    viewModel.updateUsers(searchQuery)
-                })
 
         viewModel = ViewModelProviders.of(this).get(SearchFragmentViewModel::class.java)
 
@@ -88,21 +76,23 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         setHasOptionsMenu(true)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.recycler_view, container, false)
+        return inflater.inflate(R.layout.fragment_search, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recycler_view?.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
+        recycler_view?.layoutManager = LinearLayoutManager(context)
         recycler_view?.adapter = adapter
         recycler_view?.setHasFixedSize(true)
         recycler_view?.isVerticalScrollBarEnabled = true
-        recycler_view?.addOnScrollListener(object: androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: androidx.recyclerview.widget.RecyclerView, newState: Int) {
+        recycler_view?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
 
                 if (!recyclerView.canScrollVertically(1) && !isAdvancedLoading) {
@@ -113,10 +103,10 @@ class SearchFragment : androidx.fragment.app.Fragment() {
             }
         })
 
-        if (viewModel.usersLiveData.value?.result == null)
-            searchProcessor.onNext(searchQuery)
+        if (viewModel.usersLiveData.value?.result == null) // no has data
+            showProgressBar()
+        viewModel.updateUsers(searchQuery)
     }
-
 
 
     private fun showProgressBar() {
@@ -145,15 +135,21 @@ class SearchFragment : androidx.fragment.app.Fragment() {
         inflater.inflate(R.menu.fragment_search, menu)
 
         val searchView = menu.findItem(R.id.action_search)?.actionView as? SearchView
-        searchView?.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
                 searchQuery = newText
-                Log.i("SearchFragment", "OnTextChanged")
-                searchProcessor.onNext(searchQuery)
+                showProgressBar()
+                GlobalScope.launch(job + Dispatchers.Main) {
+                    delay(300)
+                    if (newText != searchQuery) // if searchQuery changed
+                        return@launch
+
+                    viewModel.updateUsers(searchQuery)
+                }
                 return true
             }
         })
@@ -174,10 +170,6 @@ class SearchFragment : androidx.fragment.app.Fragment() {
     override fun onDestroy() {
         super.onDestroy()
 
-        searchProcessor.onComplete()
-        disposables.forEach { disposable ->
-            if (!disposable.isDisposed)
-                disposable.dispose()
-        }
+        job.cancel()
     }
 }

@@ -15,5 +15,6 @@
     <string name="enter_your_name">Enter your name</string>
     <string name="loading_error">loading error</string>
     <string name="not_found_anything">Not found anything</string>
+    <string name="please_waiting">Please, waiting</string>
 
 </resources>

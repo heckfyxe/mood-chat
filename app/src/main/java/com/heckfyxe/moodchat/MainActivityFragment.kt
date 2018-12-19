@@ -11,7 +11,7 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
     companion object {
         @JvmStatic
         fun newInstance() =
-                MainActivityFragment()
+            MainActivityFragment()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,8 +20,10 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
         setHasOptionsMenu(true)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_main, container, false)
     }
 
@@ -39,7 +41,7 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
                     true
                 }
                 R.id.action_chats -> {
-                    replaceContent()
+                    replaceContent(ConversationsFragment.newInstance())
                     fragment_main_toolbar?.setTitle(R.string.chats)
                     true
                 }
@@ -62,15 +64,15 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
-            when (item.itemId) {
-                R.id.ic_sign_out -> {
-                    VKSdk.logout()
-                    activity!!.setResult(AppCompatActivity.RESULT_OK)
-                    activity!!.finish()
-                    true
-                }
-                else -> false
+        when (item.itemId) {
+            R.id.ic_sign_out -> {
+                VKSdk.logout()
+                activity!!.setResult(AppCompatActivity.RESULT_OK)
+                activity!!.finish()
+                true
             }
+            else -> false
+        }
 
     private fun replaceContent(fragment: androidx.fragment.app.Fragment = androidx.fragment.app.Fragment()) {
         val fm = activity!!.supportFragmentManager
@@ -85,8 +87,8 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
             }
 
             fm.beginTransaction()
-                    .replace(R.id.content_fragment_container, fragment)
-                    .commit()
+                .replace(R.id.content_fragment_container, fragment)
+                .commit()
         }
     }
 }
