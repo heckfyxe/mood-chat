@@ -3,10 +3,17 @@ package com.heckfyxe.moodchat
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentPagerAdapter
+import androidx.viewpager.widget.ViewPager
 import com.vk.sdk.VKSdk
 import kotlinx.android.synthetic.main.fragment_main.*
 
 class MainActivityFragment : androidx.fragment.app.Fragment() {
+
+    private val fragments = arrayOf(
+        SearchFragment.newInstance(),
+        ConversationsFragment.newInstance())
 
     companion object {
         @JvmStatic
@@ -36,17 +43,16 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
         main_bottom_nav?.setOnNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.action_search -> {
-                    replaceContent(SearchFragment.newInstance())
+                    mainViewPager?.setCurrentItem(0, true)
                     fragment_main_toolbar?.setTitle(R.string.search)
                     true
                 }
                 R.id.action_chats -> {
-                    replaceContent(ConversationsFragment.newInstance())
+                    mainViewPager?.setCurrentItem(1, true)
                     fragment_main_toolbar?.setTitle(R.string.chats)
                     true
                 }
                 R.id.action_friends -> {
-                    replaceContent()
                     fragment_main_toolbar?.setTitle(R.string.friends)
                     true
                 }
@@ -55,6 +61,27 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
                 }
             }
         }
+
+        mainViewPager?.adapter = object: FragmentPagerAdapter(fragmentManager) {
+            override fun getItem(position: Int): Fragment =
+                fragments[position]
+
+            override fun getCount(): Int =
+                fragments.size
+        }
+
+        mainViewPager?.addOnPageChangeListener(object: ViewPager.OnPageChangeListener {
+            override fun onPageScrollStateChanged(state: Int) {}
+            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+
+            override fun onPageSelected(position: Int) {
+                main_bottom_nav?.selectedItemId = when (position) {
+                    0 -> R.id.action_search
+                    1 -> R.id.action_chats
+                    else -> return
+                }
+            }
+        })
 
         main_bottom_nav?.selectedItemId = main_bottom_nav?.selectedItemId ?: R.id.action_search
     }
@@ -73,22 +100,4 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
             }
             else -> false
         }
-
-    private fun replaceContent(fragment: androidx.fragment.app.Fragment = androidx.fragment.app.Fragment()) {
-        val fm = activity!!.supportFragmentManager
-        val fmFragment = fm.findFragmentById(R.id.content_fragment_container)
-        if (fmFragment == null)
-            fm.beginTransaction()
-                .add(R.id.content_fragment_container, fragment)
-                .commit()
-        else {
-            if (fragment is SearchFragment && fmFragment is SearchFragment) {  //TODO()
-                return
-            }
-
-            fm.beginTransaction()
-                .replace(R.id.content_fragment_container, fragment)
-                .commit()
-        }
-    }
 }

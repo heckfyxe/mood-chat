@@ -1,12 +1,12 @@
 <resources>
 
-    <style name="AppTheme" parent="Theme.Design.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="ActionBarStyle" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="color">#FFF</item>
+    <style name="ActionBarStyle" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
+
     </style>
 </resources>
