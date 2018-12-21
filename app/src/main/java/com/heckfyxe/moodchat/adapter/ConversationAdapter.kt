@@ -9,9 +9,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.heckfyxe.moodchat.R
+import com.heckfyxe.moodchat.database.GroupDao
 import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Conversation
+import com.heckfyxe.moodchat.util.loadGroup
 import com.heckfyxe.moodchat.util.loadUser
 import com.vk.sdk.api.model.VKApiConversation
 import kotlinx.android.synthetic.main.item_conversation.view.*
@@ -24,6 +26,7 @@ class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHold
 
     private val userDao: UserDao by inject()
     private val messageDao: MessageDao by inject()
+    private val groupDao: GroupDao by inject()
 
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 
@@ -69,41 +72,9 @@ class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHold
     inner class ConversationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun bind(conversation: Conversation?) {
             when (conversation?.type) {
-                VKApiConversation.Type.USER -> {
-                    scope.launch(Dispatchers.Main) {
-                        val user = async(Dispatchers.IO) {
-                            userDao.getUserById(conversation.peerId)
-                        }
-                        val lastMessage = async(Dispatchers.IO) {
-                            messageDao.getMessageById(conversation.lastMessageId)
-                        }
-
-                        user.await().let {
-                            itemView.conversationImageView?.loadUser(it)
-                            itemView.conversationNameTextView.text =
-                                    String.format("%s %s", it.lastName, it.firstName)
-
-                        }
-
-                        itemView.lastMessageTextView?.text = lastMessage.await().text
-                    }
-                }
-                VKApiConversation.Type.CHAT -> {
-                    itemView.conversationNameTextView?.text = conversation.chatSettings?.title
-                    Glide.with(itemView.conversationImageView)
-                        .setDefaultRequestOptions(
-                            RequestOptions
-                                .circleCropTransform()
-                        )
-                        .load(R.drawable.ic_group)
-                        .into(itemView.conversationImageView)
-                    scope.launch(Dispatchers.IO) {
-                        val message = messageDao.getMessageById(conversation.lastMessageId)
-                        withContext(Dispatchers.Main) {
-                            itemView.lastMessageTextView?.text = message.text
-                        }
-                    }
-                }
+                VKApiConversation.Type.USER -> bindUserConversation(conversation)
+                VKApiConversation.Type.CHAT -> bindChatConversation(conversation)
+                VKApiConversation.Type.GROUP -> bindGroupConversation(conversation)
                 null -> {
                     itemView.apply {
                         Glide.with(conversationImageView)
@@ -112,6 +83,62 @@ class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHold
                         conversationNameTextView?.text = ""
                         lastMessageTextView?.text = ""
                     }
+                }
+            }
+        }
+
+        private fun bindUserConversation(conversation: Conversation) {
+            scope.launch(Dispatchers.Main) {
+                val user = async(Dispatchers.IO) {
+                    userDao.getUserById(conversation.peerId)
+                }
+                val lastMessage = async(Dispatchers.IO) {
+                    messageDao.getMessageById(conversation.lastMessageId)
+                }
+
+                user.await().let {
+                    itemView.conversationImageView?.loadUser(it)
+                    itemView.conversationNameTextView.text =
+                            String.format("%s %s", it.lastName, it.firstName)
+
+                }
+
+                itemView.lastMessageTextView?.text = lastMessage.await().text
+            }
+        }
+
+        private fun bindChatConversation(conversation: Conversation) {
+            itemView.conversationNameTextView?.text = conversation.chatSettings?.title
+            Glide.with(itemView.conversationImageView)
+                .setDefaultRequestOptions(
+                    RequestOptions
+                        .circleCropTransform()
+                )
+                .load(R.drawable.ic_group)
+                .into(itemView.conversationImageView)
+            scope.launch(Dispatchers.IO) {
+                val message = messageDao.getMessageById(conversation.lastMessageId)
+                withContext(Dispatchers.Main) {
+                    itemView.lastMessageTextView?.text = message.text
+                }
+            }
+        }
+
+        private fun bindGroupConversation(conversation: Conversation) {
+            scope.launch(Dispatchers.Main) {
+                val group = async(Dispatchers.IO) {
+                    groupDao.getGroupById(conversation.localId)
+                }
+                val message = async(Dispatchers.IO) {
+                    messageDao.getMessageById(conversation.lastMessageId)
+                }
+
+                itemView.apply {
+                    group.await().let {
+                        conversationNameTextView?.text = it.name
+                        conversationImageView.loadGroup(it)
+                    }
+                    lastMessageTextView?.text = message.await().text
                 }
             }
         }

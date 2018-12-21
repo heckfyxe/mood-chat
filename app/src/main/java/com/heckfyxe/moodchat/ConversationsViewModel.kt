@@ -1,5 +1,6 @@
 package com.heckfyxe.moodchat
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
@@ -75,7 +76,10 @@ class ConversationsViewModel(
         }
     }
 
-    fun refresh() {
+    fun refresh(): LiveData<Boolean> {
+        // true if success, else false
+        val updateStatus = MutableLiveData<Boolean>()
+
         VKApi.messages().getConversations(
             VKParameters(
                 mapOf(
@@ -83,7 +87,19 @@ class ConversationsViewModel(
                     VKApiConst.EXTENDED to true
                 )
             )
-        ).executeWithListener(requestListener)
+        ).executeWithListener(object: VKRequest.VKRequestListener() {
+            override fun onComplete(response: VKResponse?) {
+                requestListener.onComplete(response)
+                updateStatus.postValue(true)
+            }
+
+            override fun onError(error: VKError?) {
+                requestListener.onError(error)
+                updateStatus.postValue(false)
+            }
+        })
+
+        return updateStatus
     }
 
     private val dataSource = conversationDao.getConversations()

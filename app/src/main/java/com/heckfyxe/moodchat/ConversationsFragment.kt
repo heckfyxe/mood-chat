@@ -48,6 +48,15 @@ class ConversationsFragment : Fragment() {
             adapter = conversationAdapter
             setHasFixedSize(true)
         }
+
+        conversationSwipeRefresh?.setOnRefreshListener {
+            val updateStatus = model.refresh()
+            updateStatus.observe(this, Observer {
+                conversationSwipeRefresh?.isRefreshing = false
+            })
+        }
+
+        model.refresh()
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
