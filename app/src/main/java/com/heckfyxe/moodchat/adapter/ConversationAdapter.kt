@@ -7,12 +7,12 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.heckfyxe.moodchat.R
 import com.heckfyxe.moodchat.database.GroupDao
 import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Conversation
+import com.heckfyxe.moodchat.util.loadChat
 import com.heckfyxe.moodchat.util.loadGroup
 import com.heckfyxe.moodchat.util.loadUser
 import com.vk.sdk.api.model.VKApiConversation
@@ -107,15 +107,12 @@ class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHold
             }
         }
 
+        /**
+         * @param conversation must have non-null [Conversation.chatSettings]
+         */
         private fun bindChatConversation(conversation: Conversation) {
             itemView.conversationNameTextView?.text = conversation.chatSettings?.title
-            Glide.with(itemView.conversationImageView)
-                .setDefaultRequestOptions(
-                    RequestOptions
-                        .circleCropTransform()
-                )
-                .load(R.drawable.ic_group)
-                .into(itemView.conversationImageView)
+            itemView.conversationImageView?.loadChat(conversation.chatSettings)
             scope.launch(Dispatchers.IO) {
                 val message = messageDao.getMessageById(conversation.lastMessageId)
                 withContext(Dispatchers.Main) {

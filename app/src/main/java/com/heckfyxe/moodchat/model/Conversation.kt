@@ -6,7 +6,6 @@ import androidx.room.Ignore
 import androidx.room.Index
 import com.vk.sdk.api.model.VKApiChatSettings
 import com.vk.sdk.api.model.VKApiConversation
-import com.vk.sdk.api.model.VKPhotoSizes
 import org.json.JSONObject
 
 @Entity(primaryKeys = ["peerId"], indices = [Index(value = ["peerId"], unique = true)])
@@ -50,14 +49,19 @@ class Conversation {
 
     class ChatSettings {
         var title: String = ""
+
         var membersCount = 0
 
         var state: VKApiChatSettings.State = VKApiChatSettings.State.IN
-        @Ignore
-        var photo: VKPhotoSizes? = null
+
+        @Embedded
+        var photo: PhotoSizes? = null
+
         @Ignore
         var activeIds = IntArray(4)
+
         var isGroupChannel = false
+
         @Ignore
         var pinnedMessage: Message? = null
 
@@ -69,8 +73,15 @@ class Conversation {
             title = chatSettings.title
             membersCount = chatSettings.members_count
             state = chatSettings.state
-            if (chatSettings.photo != null)
-                photo = chatSettings.photo
+            if (chatSettings.photo != null) {
+                photo = PhotoSizes().apply {
+                    chatSettings.photo.let {
+                        photo50 = it.photo_50
+                        photo100 = it.photo_100
+                        photo200 = it.photo_200
+                    }
+                }
+            }
             activeIds = chatSettings.active_ids
             isGroupChannel = chatSettings.is_group_channel
             if (chatSettings.pinned_message != null)

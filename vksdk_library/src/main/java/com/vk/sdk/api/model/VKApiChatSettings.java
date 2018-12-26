@@ -21,7 +21,7 @@ public class VKApiChatSettings extends VKApiModel implements Parcelable {
     public String title;
     public int members_count;
     public State state;
-    public VKPhotoSizes photo;
+    public VKApiPhotos photo;
     public int[] active_ids = new int[4];
     public boolean is_group_channel;
     public VKApiMessage pinned_message;
@@ -34,7 +34,7 @@ public class VKApiChatSettings extends VKApiModel implements Parcelable {
         title = in.readString();
         members_count = in.readInt();
         state = (State) in.readSerializable();
-        photo = in.readParcelable(VKPhotoSizes.class.getClassLoader());
+        photo = in.readParcelable(VKApiPhotos.class.getClassLoader());
         in.readIntArray(active_ids);
         is_group_channel = in.readByte() == 1;
         pinned_message = in.readParcelable(VKApiMessage.class.getClassLoader());
@@ -55,7 +55,7 @@ public class VKApiChatSettings extends VKApiModel implements Parcelable {
                 state = State.LEFT;
                 break;
         }
-        photo = new VKPhotoSizes(source.optJSONArray("photo"));
+        photo = new VKApiPhotos(source.optJSONObject("photo"));
         JSONArray activeIdsArray = source.optJSONArray("active_ids");
         for (int i = 0; i < 4; i++) {
             active_ids[i] = activeIdsArray.optInt(i);
