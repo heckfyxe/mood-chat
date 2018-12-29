@@ -5,4 +5,8 @@
     <color name="colorAccent">#FF4081</color>
     <color name="background">#16ffff00</color>
     <color name="image_background">#dadada</color>
+
+    <!--messages-->
+    <color name="message_user_name">#4188d4</color>
+    <color name="message_background_color">#acc1dc</color>
 </resources>

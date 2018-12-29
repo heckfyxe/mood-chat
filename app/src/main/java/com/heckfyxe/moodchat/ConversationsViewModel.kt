@@ -1,61 +1,17 @@
 package com.heckfyxe.moodchat
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import com.heckfyxe.moodchat.database.ConversationDao
-import com.heckfyxe.moodchat.database.GroupDao
-import com.heckfyxe.moodchat.database.MessageDao
-import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Conversation
-import com.heckfyxe.moodchat.model.Group
-import com.heckfyxe.moodchat.model.Message
-import com.heckfyxe.moodchat.model.User
-import com.vk.sdk.api.*
-import com.vk.sdk.api.model.VKApiGetConversationsResponse
-import kotlinx.coroutines.*
+import com.heckfyxe.moodchat.repository.ConversationRepository
+import com.vk.sdk.api.VKApiConst
+import com.vk.sdk.api.VKError
+import com.vk.sdk.api.VKParameters
 
-class ConversationsViewModel(
-    private val conversationDao: ConversationDao,
-    private val userDao: UserDao,
-    private val groupDao: GroupDao,
-    private val messageDao: MessageDao
-) : ViewModel() {
-
-    val requestListener = object : VKRequest.VKRequestListener() {
-        override fun onComplete(response: VKResponse?) {
-            val conversationResponse = VKApiGetConversationsResponse(response!!.json)
-            conversationResponse.apply {
-                val profilesDef = profiles?.map {
-                    GlobalScope.async(Dispatchers.IO) {
-                        userDao.insert(User(it))
-                    }
-                }
-                val groupsDef = groups?.map {
-                    GlobalScope.async(Dispatchers.IO) {
-                        groupDao.insert(Group(it))
-                    }
-                }
-                val itemsDef = items?.map {
-                    GlobalScope.async(Dispatchers.IO) {
-                        messageDao.insert(Message(it.last_message))
-                        conversationDao.insert(Conversation(it.conversation))
-                    }
-                }
-                GlobalScope.launch {
-                    profilesDef?.awaitAll()
-                    groupsDef?.awaitAll()
-                    itemsDef?.awaitAll()
-                }
-            }
-        }
-
-        override fun onError(error: VKError?) {
-            errors.postValue(error)
-        }
-    }
+class ConversationsViewModel(private val repository: ConversationRepository) : ViewModel() {
 
     private val boundaryCallback = object : PagedList.BoundaryCallback<Conversation>() {
         override fun onZeroItemsLoaded() {
@@ -63,7 +19,7 @@ class ConversationsViewModel(
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: Conversation) {
-            VKApi.messages().getConversations(
+            repository.refresh(
                 VKParameters(
                     mapOf(
                         VKApiConst.COUNT to PAGE_SIZE,
@@ -72,48 +28,31 @@ class ConversationsViewModel(
                         VKApiConst.OFFSET to 1
                     )
                 )
-            ).executeWithListener(requestListener)
+            )
         }
     }
-
-    fun refresh(): LiveData<Boolean> {
-        // true if success, else false
-        val updateStatus = MutableLiveData<Boolean>()
-
-        VKApi.messages().getConversations(
-            VKParameters(
-                mapOf(
-                    VKApiConst.COUNT to PAGE_SIZE,
-                    VKApiConst.EXTENDED to true
-                )
-            )
-        ).executeWithListener(object: VKRequest.VKRequestListener() {
-            override fun onComplete(response: VKResponse?) {
-                requestListener.onComplete(response)
-                updateStatus.postValue(true)
-            }
-
-            override fun onError(error: VKError?) {
-                requestListener.onError(error)
-                updateStatus.postValue(false)
-            }
-        })
-
-        return updateStatus
-    }
-
-    private val dataSource = conversationDao.getConversations()
 
     private val config = PagedList.Config.Builder()
         .setPageSize(PAGE_SIZE)
         .setPrefetchDistance(PREFETCH_DISTANCE)
         .build()
 
-    val pagedList = LivePagedListBuilder<Int, Conversation>(dataSource, config)
+    val pagedList = LivePagedListBuilder<Int, Conversation>(repository.dataSourceFactory, config)
         .setBoundaryCallback(boundaryCallback)
         .build()
 
-    val errors = MutableLiveData<VKError>()
+    val errors: LiveData<VKError> = Transformations.map(repository.errors) { it }
+
+    fun refresh(): LiveData<Boolean> =
+        repository.refresh(
+            VKParameters(
+                mapOf(
+                    VKApiConst.COUNT to ConversationsViewModel.PAGE_SIZE,
+                    VKApiConst.EXTENDED to true
+                )
+            )
+        )
+
 
     companion object {
         private const val PAGE_SIZE = 20

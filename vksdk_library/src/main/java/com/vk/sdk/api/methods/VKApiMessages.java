@@ -28,6 +28,8 @@ import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.model.VKApiGetConversationsResponse;
 import com.vk.sdk.api.model.VKApiGetDialogResponse;
 import com.vk.sdk.api.model.VKApiGetMessagesResponse;
+import com.vk.sdk.api.model.VKApiMessage;
+import com.vk.sdk.api.model.VKList;
 
 import org.json.JSONObject;
 
@@ -100,6 +102,16 @@ public class VKApiMessages extends VKApiBase {
             @Override
             public Object createModel(JSONObject object) {
                 return new VKApiGetConversationsResponse(object);
+            }
+        });
+    }
+
+    public VKRequest getHistory(VKParameters params) {
+        return prepareRequest("getHistory", params, new VKParser() {
+            @Override
+            public Object createModel(JSONObject object) {
+                JSONObject response = object.optJSONObject("response");
+                return new VKList<>(response.optJSONArray("items"), VKApiMessage.class);
             }
         });
     }
