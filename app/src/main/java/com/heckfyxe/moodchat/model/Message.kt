@@ -23,6 +23,8 @@ class Message {
 
     var randomId: Int = 0
 
+    var out: Boolean = false
+
     @Ignore
     var attachments: VKAttachments? = null
 
@@ -44,6 +46,7 @@ class Message {
         fromId = message.from_id
         text = message.text
         randomId = message.random_id
+        out = message.out
         attachments = message.attachments
         important = message.important
         fwdMessages = message.fwd_messages

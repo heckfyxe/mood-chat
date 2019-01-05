@@ -1,5 +1,6 @@
 package com.heckfyxe.moodchat
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -27,7 +28,12 @@ class ConversationsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        conversationAdapter = ConversationAdapter()
+        conversationAdapter = ConversationAdapter {
+            startActivity(Intent(context, MessagesActivity::class.java).apply {
+                putExtra(MessagesActivity.EXTRA_PEER_ID, it.peerId)
+                putExtra(MessagesActivity.EXTRA_LAST_MESSAGE_ID, it.lastMessageId)
+            })
+        }
         model.pagedList.observe(this, Observer {
             conversationAdapter.submitList(it)
         })

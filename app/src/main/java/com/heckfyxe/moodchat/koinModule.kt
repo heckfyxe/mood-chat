@@ -21,4 +21,5 @@ val koinModule = module {
 
     // ViewModels
     viewModel { ConversationsViewModel(get()) }
+    viewModel { MessagesViewModel() }
 }

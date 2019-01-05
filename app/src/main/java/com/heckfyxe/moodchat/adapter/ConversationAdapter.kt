@@ -21,7 +21,8 @@ import kotlinx.coroutines.*
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
-class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHolder>(DIFF),
+class ConversationAdapter(val onClick: (Conversation) -> Unit) :
+    PagedListAdapter<Conversation, RecyclerView.ViewHolder>(DIFF),
     KoinComponent {
 
     private val userDao: UserDao by inject()
@@ -85,6 +86,11 @@ class ConversationAdapter : PagedListAdapter<Conversation, RecyclerView.ViewHold
                     }
                 }
             }
+
+            if (conversation != null)
+                itemView.setOnClickListener {
+                    onClick(conversation)
+                }
         }
 
         private fun bindUserConversation(conversation: Conversation) {

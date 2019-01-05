@@ -11,17 +11,17 @@ import com.heckfyxe.moodchat.model.Message
 interface MessageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(vararg messages: Message)
+    suspend fun insert(vararg messages: Message)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(messages: List<Message>)
+    suspend fun insert(messages: List<Message>)
 
     @Query("SELECT * FROM message WHERE id = :id LIMIT 1")
-    fun getMessageById(id: Int): Message
+    suspend fun getMessageById(id: Int): Message
 
-    @Query("SELECT * FROM message WHERE peerId = :peerId ORDER BY conversationMessageId DESC")
+    @Query("SELECT * FROM message WHERE peerId = :peerId ORDER BY conversationMessageId ASC")
     fun getMessagesByPeerId(peerId: Int): DataSource.Factory<Int, Message>
 
     @Query("SELECT * FROM message WHERE peerId = :peerId AND conversationMessageId = :conversationMessageId LIMIT 1")
-    fun getMessageByConversationMessageId(peerId: Int, conversationMessageId: Int): Message
+    suspend fun getMessageByConversationMessageId(peerId: Int, conversationMessageId: Int): Message
 }
