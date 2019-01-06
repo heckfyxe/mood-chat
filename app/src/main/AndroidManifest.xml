@@ -29,6 +29,9 @@
             android:label="@string/title_activity_main" />
         <activity
             android:name=".MessagesActivity"/>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="36015245bf03f8656736668fbf424f0fc5db853c" />
     </application>
 
 </manifest>

@@ -2,6 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'io.fabric'
 
 
 android {
@@ -32,11 +34,7 @@ android {
             signingConfig signingConfigs.config
         }
     }
-    productFlavors {
-    }
     buildToolsVersion '28.0.3'
-    dexOptions {
-    }
 }
 
 ext {
@@ -82,8 +80,6 @@ dependencies {
     // Koin
     implementation "org.koin:koin-core:$koin_version"
     implementation "org.koin:koin-android:$koin_version"
-
-    //    implementation "org.koin:koin-androidx-scope:$koin_version"
     implementation "org.koin:koin-androidx-viewmodel:$koin_version"
 
     // Coroutines
@@ -92,4 +88,8 @@ dependencies {
 
     // VK
     implementation project(':vksdk_library')
+
+    // Firebase
+    implementation "com.google.firebase:firebase-core:16.0.6"
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.8'
 }
