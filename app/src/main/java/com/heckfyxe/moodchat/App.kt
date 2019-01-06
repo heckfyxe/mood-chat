@@ -4,6 +4,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.multidex.MultiDexApplication
 import com.crashlytics.android.Crashlytics
+import com.google.firebase.auth.FirebaseAuth
 import com.vk.sdk.VKAccessToken
 import com.vk.sdk.VKAccessTokenTracker
 import com.vk.sdk.VKSdk
@@ -29,6 +30,11 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            auth.signInAnonymously()
+        }
 
         Fabric.with(this, Crashlytics())
 

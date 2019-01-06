@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "191117019239",
+    "firebase_url": "https://mood-chat-2e556.firebaseio.com",
+    "project_id": "mood-chat-2e556",
+    "storage_bucket": "mood-chat-2e556.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191117019239:android:fd4ca34dd37f0e23",
+        "android_client_info": {
+          "package_name": "com.heckfyxe.moodchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "191117019239-coreevnb5to5b4019t6tu8euogp8npfq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.heckfyxe.moodchat",
+            "certificate_hash": "c6f12b64edee2ed3a1b74c43b31cba503d46d127"
+          }
+        },
+        {
+          "client_id": "191117019239-7ddj2nmr6ula4qjud3ubtq0rh8s3seb1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.heckfyxe.moodchat",
+            "certificate_hash": "9a7768c657ac17605a038ee06ebe84f3b6c62555"
+          }
+        },
+        {
+          "client_id": "191117019239-fgrtvav8h8ud7jdbp7nveeroj1v7a77e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1Zq_tLnTFnL_6MOhJZPgwh0c2XUfTIIg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "191117019239-fgrtvav8h8ud7jdbp7nveeroj1v7a77e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -30,7 +30,7 @@
         <activity
             android:name=".MessagesActivity"/>
         <meta-data
-            android:name="io.fabric.ApiKey"
+            android:name="io.fabric.sdk.android.services.common.ApiKey"
             android:value="36015245bf03f8656736668fbf424f0fc5db853c" />
     </application>
 
