@@ -70,7 +70,7 @@ class ConversationsFragment : Fragment() {
 
         model.errors.observe(this, Observer {
             Log.e("ConversationFragment", it.toString())
-            Snackbar.make(view!!, it.apiError.errorMessage, Snackbar.LENGTH_LONG)
+            Snackbar.make(view!!, R.string.loading_error, Snackbar.LENGTH_LONG)
                 .setAction(R.string.retry) {
                     model.refresh()
                 }.show()

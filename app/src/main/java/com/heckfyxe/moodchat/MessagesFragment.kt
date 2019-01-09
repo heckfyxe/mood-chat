@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.heckfyxe.moodchat.adapter.MessageAdapter
 import com.heckfyxe.moodchat.database.ConversationDao
 import com.heckfyxe.moodchat.database.GroupDao
@@ -42,6 +43,8 @@ class MessagesFragment : Fragment() {
 
     private lateinit var conversationDeferred: Deferred<Conversation>
 
+    private var lastMessageId: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -50,7 +53,7 @@ class MessagesFragment : Fragment() {
         }
 
         val peerId = arguments!!.getInt(KEY_PEER_ID)
-        val lastMessageId = arguments!!.getInt(KEY_LAST_MESSAGE_ID, -1)
+        lastMessageId = arguments!!.getInt(KEY_LAST_MESSAGE_ID, -1)
         viewModel.init(peerId, lastMessageId)
 
         conversationDeferred = scope.async(Dispatchers.IO) {
@@ -70,6 +73,13 @@ class MessagesFragment : Fragment() {
 
         scope.launch {
             val conversation = conversationDeferred.await()
+
+//            conversation.unreadCount.also {
+//                if (it > 0) {
+//                    viewModel.updateHistory(lastMessageId, it)
+//                }
+//            }
+
             val title = when(conversation.type) {
                 VKApiConversation.Type.CHAT ->
                     conversation.chatSettings!!.title
@@ -91,7 +101,7 @@ class MessagesFragment : Fragment() {
 
             val messageAdapter = MessageAdapter(conversation.type == VKApiConversation.Type.CHAT)
             messagesRecyclerView?.apply {
-                layoutManager = LinearLayoutManager(context)
+                layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, true)
                 adapter = messageAdapter
             }
 

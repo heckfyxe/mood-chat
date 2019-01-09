@@ -1,6 +1,8 @@
 package com.heckfyxe.moodchat
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -18,6 +20,8 @@ class AuthActivity : AppCompatActivity() {
     companion object {
         const val RC_MAIN_ACTIVITY = 1
 
+        private const val KEY_IS_LOGGED = "com.heckfyxe.moodchat.KEY_IS_LOGGED"
+
         private val SCOPES = arrayOf(VKScopes.MESSAGES, VKScopes.GROUPS)
     }
 
@@ -29,19 +33,23 @@ class AuthActivity : AppCompatActivity() {
             override fun onResult(res: VKSdk.LoginState) {
                 when (res) {
                     VKSdk.LoginState.LoggedIn ->
-                        launchMainActivity()
+                        if (!getSharedPreferences().getBoolean(KEY_IS_LOGGED, false))
+                            launchMainActivity()
                     VKSdk.LoginState.LoggedOut ->
                         VKSdk.login(this@AuthActivity, *SCOPES)
                     VKSdk.LoginState.Unknown ->
                         VKSdk.login(this@AuthActivity, *SCOPES)
                     VKSdk.LoginState.Pending -> {
-                        noNetworkGroup?.show()
+                        if (getSharedPreferences().getBoolean(KEY_IS_LOGGED, false)) {
+                            launchMainActivity()
+                        } else
+                            noNetworkGroup?.show()
                     }
                 }
             }
 
             override fun onError(error: VKError?) {
-                Log.e("AuthActivity", "auth error: ${error?.errorReason}")
+                Log.e("AuthActivity", "auth error: ${error?.toString()}")
                 Toast.makeText(this@AuthActivity, R.string.auth_error, Toast.LENGTH_SHORT).show()
                 VKSdk.login(this@AuthActivity, *SCOPES)
             }
@@ -71,8 +79,12 @@ class AuthActivity : AppCompatActivity() {
                 RC_MAIN_ACTIVITY -> {
                     if (resultCode == AppCompatActivity.RESULT_CANCELED)
                         finish()
-                    else
+                    else { //logout
+                        getSharedPreferences().edit()
+                            .putBoolean(KEY_IS_LOGGED, false)
+                            .apply()
                         recreate()
+                    }
                 }
                 else -> super.onActivityResult(requestCode, resultCode, data)
             }
@@ -82,7 +94,15 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private fun launchMainActivity() {
+        getSharedPreferences().edit()
+            .putBoolean(KEY_IS_LOGGED, true)
+            .apply()
+
         val intent = Intent(this, MainActivity::class.java)
         startActivityForResult(intent, RC_MAIN_ACTIVITY)
     }
+
+    private fun getSharedPreferences(): SharedPreferences =
+        getSharedPreferences("auth-pref", Context.MODE_PRIVATE)
+
 }

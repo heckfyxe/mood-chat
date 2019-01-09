@@ -22,6 +22,12 @@ interface MessageDao {
     @Query("SELECT * FROM message WHERE peerId = :peerId ORDER BY conversationMessageId ASC")
     fun getMessagesByPeerId(peerId: Int): DataSource.Factory<Int, Message>
 
+    @Query("SELECT * FROM message WHERE peerId = :peerId AND id < :startMessageId ORDER BY conversationMessageId DESC LIMIT :count")
+    suspend fun getMessagesByPeerId(peerId: Int, startMessageId: Int, count: Int): List<Message>
+
     @Query("SELECT * FROM message WHERE peerId = :peerId AND conversationMessageId = :conversationMessageId LIMIT 1")
     suspend fun getMessageByConversationMessageId(peerId: Int, conversationMessageId: Int): Message
+
+    @Query("SELECT EXISTS(SELECT * FROM message WHERE id = :id LIMIT 1)")
+    suspend fun existsMessageById(id: Int): Boolean
 }
