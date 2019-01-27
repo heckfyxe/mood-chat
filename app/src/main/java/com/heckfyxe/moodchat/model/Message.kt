@@ -1,6 +1,7 @@
 package com.heckfyxe.moodchat.model
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Ignore
 import androidx.room.Index
 import com.vk.sdk.api.model.VKApiMessage
@@ -8,7 +9,13 @@ import com.vk.sdk.api.model.VKAttachments
 import com.vk.sdk.api.model.VKList
 import org.json.JSONObject
 
-@Entity(primaryKeys = ["id"], indices = [Index(value = ["id"], unique = true)])
+@Entity(primaryKeys = ["id"],
+        indices = [Index(value = ["id"], unique = true)],
+        foreignKeys = [ForeignKey(
+                entity = Conversation::class,
+                parentColumns = ["peerId"],
+                childColumns = ["peerId"],
+                onDelete = ForeignKey.CASCADE)])
 class Message {
 
     var id: Int = 0

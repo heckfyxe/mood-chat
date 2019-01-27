@@ -8,14 +8,14 @@ apply plugin: 'io.fabric'
 
 android {
     signingConfigs {
-        config {
-            Properties properties = new Properties()
-            properties.load(project.rootProject.file('local.properties').newDataInputStream())
-            storeFile file(properties.getProperty('storeFile'))
-            keyAlias properties.getProperty('keyAlias')
-            storePassword properties.getProperty('storePassword')
-            keyPassword properties.getProperty('keyPassword')
-        }
+//        config {
+//            Properties properties = new Properties()
+//            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+//            storeFile file(properties.getProperty('storeFile'))
+//            keyAlias properties.getProperty('keyAlias')
+//            storePassword properties.getProperty('storePassword')
+//            keyPassword properties.getProperty('keyPassword')
+//        }
     }
     compileSdkVersion 28
     defaultConfig {
@@ -27,19 +27,19 @@ android {
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.config
-        }
-    }
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//            signingConfig signingConfigs.config
+//        }
+//    }
     buildToolsVersion '28.0.3'
 }
 
 ext {
-    room_version = '2.1.0-alpha03'
-    paging_version = '2.1.0-rc01'
+    room_version = '2.1.0-alpha04'
+    paging_version = '2.1.0'
     koin_version = '1.0.2'
     coroutines_version = '1.0.1'
     glide_version = '4.8.0'
@@ -90,7 +90,7 @@ dependencies {
     implementation project(':vksdk_library')
 
     // Firebase
-    implementation "com.google.firebase:firebase-core:16.0.6"
+    implementation 'com.google.firebase:firebase-core:16.0.6'
     implementation 'com.google.firebase:firebase-auth:16.1.0'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.8'
 }
