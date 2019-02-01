@@ -1,9 +1,6 @@
 package com.heckfyxe.moodchat.database
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.heckfyxe.moodchat.model.User
 
 @Dao
@@ -17,4 +14,10 @@ interface UserDao {
 
     @Query("SELECT * FROM user WHERE id = :id LIMIT 1")
     suspend fun getUserById(id: Int): User
+
+    @Delete
+    suspend fun deleteUsers(vararg users: User)
+
+    @Delete
+    suspend fun deleteUsers(users: List<User>)
 }

@@ -7,40 +7,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:minHeight="@dimen/item_user_min_height">
 
-    <FrameLayout
+    <include
         android:id="@+id/frameLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        layout="@layout/item_user_avatar"
+        android:layout_width="@dimen/image_size"
+        android:layout_height="@dimen/image_size"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/userAvatar"
-            android:layout_width="@dimen/image_size"
-            android:layout_height="@dimen/image_size"
-            android:contentDescription="@string/user_avatar"
-            tools:src="@tools:sample/avatars" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/onlineMobileImageView"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_online_mobile"
-            android:visibility="invisible" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/onlineImageView"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_online"
-            android:visibility="invisible" />
-    </FrameLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/userName"

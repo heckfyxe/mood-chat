@@ -11,6 +11,7 @@ import com.heckfyxe.moodchat.model.User
 import com.heckfyxe.moodchat.util.hide
 import com.heckfyxe.moodchat.util.show
 import kotlinx.android.synthetic.main.item_user.view.*
+import kotlinx.android.synthetic.main.item_user_avatar.view.*
 
 class UserAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {

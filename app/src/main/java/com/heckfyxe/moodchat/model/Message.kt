@@ -16,47 +16,49 @@ import org.json.JSONObject
                 parentColumns = ["peerId"],
                 childColumns = ["peerId"],
                 onDelete = ForeignKey.CASCADE)])
-class Message {
+data class Message(
+        var id: Int = 0,
 
-    var id: Int = 0
+        var date: Long = 0L,
 
-    var date: Long = 0L
+        var peerId: Int = 0,
 
-    var peerId: Int = 0
+        var fromId: Int = 0,
 
-    var fromId: Int = 0
+        var text: String = "",
 
-    var text: String = ""
+        var randomId: Int = 0,
 
-    var randomId: Int = 0
+        var out: Boolean = false,
 
-    var out: Boolean = false
+        @Ignore
+        var attachments: VKAttachments? = null,
 
-    @Ignore
-    var attachments: VKAttachments? = null
+        var important: Boolean = false,
 
-    var important: Boolean = false
+        @Ignore
+        var fwdMessages: VKList<VKApiMessage>? = null,
 
-    @Ignore
-    var fwdMessages: VKList<VKApiMessage>? = null
+        var conversationMessageId: Int = 0) {
 
-    var conversationMessageId: Int = 0
+    companion object {
+        @JvmStatic
+        fun create(source: JSONObject): Message =
+                create(VKApiMessage(source))
 
-    constructor()
-
-    constructor(source: JSONObject) : this(VKApiMessage(source))
-
-    constructor(message: VKApiMessage) {
-        id = message.id
-        date = message.date
-        peerId = message.peer_id
-        fromId = message.from_id
-        text = message.text
-        randomId = message.random_id
-        out = message.out
-        attachments = message.attachments
-        important = message.important
-        fwdMessages = message.fwd_messages
-        conversationMessageId = message.conversation_message_id
+        @JvmStatic
+        fun create(message: VKApiMessage) =
+                Message(
+                        id = message.id,
+                        date = message.date,
+                        peerId = message.peer_id,
+                        fromId = message.from_id,
+                        text = message.text,
+                        randomId = message.random_id,
+                        out = message.out,
+                        attachments = message.attachments,
+                        important = message.important,
+                        fwdMessages = message.fwd_messages,
+                        conversationMessageId = message.conversation_message_id)
     }
 }

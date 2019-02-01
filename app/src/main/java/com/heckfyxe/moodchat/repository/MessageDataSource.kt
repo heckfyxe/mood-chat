@@ -3,6 +3,7 @@ package com.heckfyxe.moodchat.repository
 import android.util.Log
 import androidx.paging.DataSource
 import androidx.paging.ItemKeyedDataSource
+import com.heckfyxe.moodchat.database.AppDatabase
 import com.heckfyxe.moodchat.database.GroupDao
 import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
@@ -21,6 +22,7 @@ import org.koin.standalone.inject
 
 class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Message>(), KoinComponent {
 
+    private val database: AppDatabase by inject()
     private val messageDao: MessageDao by inject()
     private val userDao: UserDao by inject()
     private val groupDao: GroupDao by inject()
@@ -77,19 +79,23 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
                 val groups: JSONArray? = responseJsonObject.optJSONArray("groups")
 
                 scope.launch {
-                    if (profiles != null)
-                        userDao.insert(List(profiles.length()) {
-                            User(profiles.getJSONObject(it))
-                        })
+                    database.runInTransaction {
+                        launch {
+                            if (profiles != null)
+                                userDao.insert(List(profiles.length()) {
+                                    User.create(profiles.getJSONObject(it))
+                                })
 
-                    if (groups != null)
-                        groupDao.insert(List(groups.length()) {
-                            Group(groups.getJSONObject(it))
-                        })
+                            if (groups != null)
+                                groupDao.insert(List(groups.length()) {
+                                    Group.create(groups.getJSONObject(it))
+                                })
 
-                    messageDao.insert(List(messages.length()) {
-                        Message(messages.getJSONObject(it))
-                    })
+                            messageDao.insert(List(messages.length()) {
+                                Message.create(messages.getJSONObject(it))
+                            })
+                        }
+                    }
 
                     channel.send(true)
                 }

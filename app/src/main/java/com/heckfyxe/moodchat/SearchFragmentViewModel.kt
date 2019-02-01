@@ -20,7 +20,7 @@ class SearchFragmentViewModel : ViewModel() {
     fun updateUsers(q: String?) {
         offset = 0
         loadUsers(q).executeWithListener(VKRequestCompletedListener { users ->
-            usersLiveData.postValue(UsersListResult(result = users.map { User(it) }))
+            usersLiveData.postValue(UsersListResult(result = users.map { User.create(it) }))
         })
     }
 
@@ -28,7 +28,7 @@ class SearchFragmentViewModel : ViewModel() {
         loadUsers(q).executeWithListener(VKRequestCompletedListener { users ->
             usersLiveData.postValue(
                 UsersListResult(
-                    result = users.map { User(it) },
+                    result = users.map { User.create(it) },
                     isAdvanced = true,
                     data = with(usersLiveData.value!!) {
                         if (isAdvanced) {

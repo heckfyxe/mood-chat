@@ -12,18 +12,19 @@ import com.heckfyxe.moodchat.database.GroupDao
 import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Conversation
-import com.heckfyxe.moodchat.util.loadChat
-import com.heckfyxe.moodchat.util.loadGroup
-import com.heckfyxe.moodchat.util.loadUser
+import com.heckfyxe.moodchat.model.Message
+import com.heckfyxe.moodchat.util.*
 import com.vk.sdk.api.model.VKApiConversation
-import kotlinx.android.synthetic.main.item_conversation.view.*
+import com.vk.sdk.api.model.VKApiConversation.Type.*
+import kotlinx.android.synthetic.main.item_non_user_conversation.view.*
+import kotlinx.android.synthetic.main.item_user_avatar.view.*
 import kotlinx.coroutines.*
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
 class ConversationAdapter(val onClick: (Conversation) -> Unit) :
-    PagedListAdapter<Conversation, RecyclerView.ViewHolder>(DIFF),
-    KoinComponent {
+        PagedListAdapter<Conversation, RecyclerView.ViewHolder>(DIFF),
+        KoinComponent {
 
     private val userDao: UserDao by inject()
     private val messageDao: MessageDao by inject()
@@ -35,7 +36,11 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             CONVERSATION_TYPE -> {
-                val view = inflater.inflate(R.layout.item_conversation, parent, false)
+                val view = inflater.inflate(R.layout.item_non_user_conversation, parent, false)
+                ConversationViewHolder(view)
+            }
+            USER_CONVERSATION_TYPE -> {
+                val view = inflater.inflate(R.layout.item_user_conversation, parent, false)
                 ConversationViewHolder(view)
             }
             else -> throw Exception("Unknown view type")
@@ -50,37 +55,44 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
         }
     }
 
-    override fun getItemViewType(position: Int): Int =
-        if (getItem(position) != null)
-            CONVERSATION_TYPE
-        else
+    override fun getItemViewType(position: Int): Int {
+        val item = getItem(position)
+
+        if (item == null)
             LOADING_VIEW_TYPE
+
+        return if (item!!.type == VKApiConversation.Type.USER)
+            USER_CONVERSATION_TYPE
+        else
+            CONVERSATION_TYPE
+    }
 
 
     companion object {
         private const val CONVERSATION_TYPE = 0
-        private const val LOADING_VIEW_TYPE = 1
+        private const val USER_CONVERSATION_TYPE = 1
+        private const val LOADING_VIEW_TYPE = 2
 
         private val DIFF = object : DiffUtil.ItemCallback<Conversation>() {
             override fun areItemsTheSame(oldItem: Conversation, newItem: Conversation) =
-                oldItem.peerId == newItem.peerId
+                    oldItem.peerId == newItem.peerId
 
             override fun areContentsTheSame(oldItem: Conversation, newItem: Conversation) =
-                oldItem == newItem
+                    oldItem == newItem
         }
     }
 
     inner class ConversationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun bind(conversation: Conversation?) {
             when (conversation?.type) {
-                VKApiConversation.Type.USER -> bindUserConversation(conversation)
-                VKApiConversation.Type.CHAT -> bindChatConversation(conversation)
-                VKApiConversation.Type.GROUP -> bindGroupConversation(conversation)
+                USER, EMAIL -> bindUserConversation(conversation)
+                CHAT -> bindChatConversation(conversation)
+                GROUP -> bindGroupConversation(conversation)
                 null -> {
                     itemView.apply {
                         Glide.with(conversationImageView)
-                            .load(R.drawable.ic_user)
-                            .into(conversationImageView)
+                                .load(R.drawable.ic_user)
+                                .into(conversationImageView)
                         conversationNameTextView?.text = ""
                         lastMessageTextView?.text = ""
                     }
@@ -103,10 +115,19 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
                 }
 
                 user.await().let {
-                    itemView.conversationImageView?.loadUser(it)
-                    itemView.conversationNameTextView.text =
-                            String.format("%s %s", it.lastName, it.firstName)
+                    itemView.apply {
+                        userAvatar?.loadUser(it)
+                        onlineImageView?.gone()
+                        onlineMobileImageView?.gone()
+                        if (it.onlineMobile)
+                            onlineMobileImageView?.show()
+                        else if (it.online)
+                            onlineImageView?.show()
 
+                        conversationNameTextView.text =
+                                String.format("%s %s", it.lastName, it.firstName)
+
+                    }
                 }
 
                 itemView.lastMessageTextView?.text = lastMessage.await().text
@@ -120,9 +141,9 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
             itemView.conversationNameTextView?.text = conversation.chatSettings?.title
             itemView.conversationImageView?.loadChat(conversation.chatSettings)
             scope.launch(Dispatchers.IO) {
-                val message = messageDao.getMessageById(conversation.lastMessageId)
+                val message: Message? = messageDao.getMessageById(conversation.lastMessageId)
                 withContext(Dispatchers.Main) {
-                    itemView.lastMessageTextView?.text = message.text
+                    itemView.lastMessageTextView?.text = message?.text ?: ""
                 }
             }
         }

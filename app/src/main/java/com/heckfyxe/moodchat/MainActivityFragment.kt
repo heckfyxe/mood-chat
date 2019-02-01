@@ -5,9 +5,15 @@ import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentPagerAdapter
+import androidx.room.Database
 import androidx.viewpager.widget.ViewPager
+import com.heckfyxe.moodchat.database.AppDatabase
 import com.vk.sdk.VKSdk
 import kotlinx.android.synthetic.main.fragment_main.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.get
 
 class MainActivityFragment : androidx.fragment.app.Fragment() {
 
@@ -94,6 +100,10 @@ class MainActivityFragment : androidx.fragment.app.Fragment() {
         when (item.itemId) {
             R.id.ic_sign_out -> {
                 VKSdk.logout()
+                val database: AppDatabase = get()
+                GlobalScope.launch(Dispatchers.IO) {
+                    database.clearAllTables()
+                }
                 activity!!.setResult(AppCompatActivity.RESULT_OK)
                 activity!!.finish()
                 true

@@ -1,10 +1,7 @@
 package com.heckfyxe.moodchat.database
 
 import androidx.paging.DataSource
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.heckfyxe.moodchat.model.Message
 
 @Dao
@@ -28,6 +25,9 @@ interface MessageDao {
     @Query("SELECT * FROM message WHERE peerId = :peerId AND conversationMessageId = :conversationMessageId LIMIT 1")
     suspend fun getMessageByConversationMessageId(peerId: Int, conversationMessageId: Int): Message
 
-    @Query("SELECT EXISTS(SELECT * FROM message WHERE id = :id LIMIT 1)")
-    suspend fun existsMessageById(id: Int): Boolean
+    @Delete
+    suspend fun deleteMessages(vararg messages: Message)
+
+    @Delete
+    suspend fun deleteMessages(messages: List<Message>)
 }

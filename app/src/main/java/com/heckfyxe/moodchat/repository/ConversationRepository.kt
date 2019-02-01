@@ -35,10 +35,10 @@ class ConversationRepository: KoinComponent {
     fun updateDatabase(response: VKApiGetConversationsResponse) {
         response.apply {
             val profilesDef = profiles?.map {
-                User(it)
+                User.create(it)
             }
             val groupsDef = groups?.map {
-                Group(it)
+                Group.create(it)
             }
 
             val messages = mutableListOf<Message>()
@@ -47,8 +47,8 @@ class ConversationRepository: KoinComponent {
             var minLastMessageId = items.getOrNull(0)?.last_message?.id
             var maxLastMessageId = items.getOrNull(0)?.last_message?.id
             items?.map<VKApiGetConversationsResponseItem, Unit> {
-                conversations.add(Conversation(it.conversation))
-                messages.add(Message(it.last_message))
+                conversations.add(Conversation.create(it.conversation))
+                messages.add(Message.create(it.last_message))
                 conversationLastMessageIdSet.add(it.conversation.last_message_id)
                 if (minLastMessageId != null && maxLastMessageId != null) {
                     val lastMessageId = it.last_message.id
