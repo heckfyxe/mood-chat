@@ -12,7 +12,9 @@ import com.heckfyxe.moodchat.database.GroupDao
 import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Conversation
+import com.heckfyxe.moodchat.model.Group
 import com.heckfyxe.moodchat.model.Message
+import com.heckfyxe.moodchat.model.User
 import com.heckfyxe.moodchat.util.*
 import com.vk.sdk.api.model.VKApiConversation
 import com.vk.sdk.api.model.VKApiConversation.Type.*
@@ -95,6 +97,7 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
                                 .into(conversationImageView)
                         conversationNameTextView?.text = ""
                         lastMessageTextView?.text = ""
+                        lastMessageImageView?.visibility = View.GONE
                     }
                 }
             }
@@ -107,30 +110,30 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
 
         private fun bindUserConversation(conversation: Conversation) {
             scope.launch(Dispatchers.Main) {
-                val user = async(Dispatchers.IO) {
+                val user: Deferred<User?> = async(Dispatchers.IO) {
                     userDao.getUserById(conversation.peerId)
                 }
-                val lastMessage = async(Dispatchers.IO) {
+                val lastMessage: Deferred<Message?> = async(Dispatchers.IO) {
                     messageDao.getMessageById(conversation.lastMessageId)
                 }
 
                 user.await().let {
                     itemView.apply {
-                        userAvatar?.loadUser(it)
+                        userAvatar?.loadUser(it ?: User())
                         onlineImageView?.gone()
                         onlineMobileImageView?.gone()
-                        if (it.onlineMobile)
+                        if (it?.onlineMobile ?: false)
                             onlineMobileImageView?.show()
-                        else if (it.online)
+                        else if (it?.online ?: false)
                             onlineImageView?.show()
 
                         conversationNameTextView.text =
-                                String.format("%s %s", it.lastName, it.firstName)
+                                String.format("%s %s", it?.lastName, it?.firstName)
 
                     }
                 }
 
-                itemView.lastMessageTextView?.text = lastMessage.await().text
+                itemView.lastMessageTextView?.text = lastMessage.await()?.text ?: ""
             }
         }
 
@@ -142,8 +145,10 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
             itemView.conversationImageView?.loadChat(conversation.chatSettings)
             scope.launch(Dispatchers.IO) {
                 val message: Message? = messageDao.getMessageById(conversation.lastMessageId)
-                withContext(Dispatchers.Main) {
+                val user: User? = userDao.getUserById(message?.fromId ?: -1)
+                withContext<Unit>(Dispatchers.Main) {
                     itemView.lastMessageTextView?.text = message?.text ?: ""
+                    itemView.lastMessageImageView?.loadUser(user ?: User())
                 }
             }
         }
@@ -159,10 +164,11 @@ class ConversationAdapter(val onClick: (Conversation) -> Unit) :
 
                 itemView.apply {
                     group.await().let {
-                        conversationNameTextView?.text = it.name
-                        conversationImageView.loadGroup(it)
+                        conversationNameTextView?.text = it?.name
+                        conversationImageView.loadGroup(it ?: Group())
                     }
-                    lastMessageTextView?.text = message.await().text
+                    lastMessageTextView?.text = message.await()?.text
+                    lastMessageImageView?.visibility = View.GONE
                 }
             }
         }

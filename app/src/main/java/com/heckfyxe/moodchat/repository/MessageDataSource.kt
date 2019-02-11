@@ -1,6 +1,9 @@
 package com.heckfyxe.moodchat.repository
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.paging.DataSource
 import androidx.paging.ItemKeyedDataSource
 import com.heckfyxe.moodchat.database.AppDatabase
@@ -13,9 +16,8 @@ import com.heckfyxe.moodchat.model.User
 import com.vk.sdk.api.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
@@ -44,11 +46,22 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
         val count = params.requestedLoadSize
 
         scope.launch {
-            val channel = updateHistory(startMessageId, count)
-            channel.receive()
-
-            val messages = messageDao.getMessagesByPeerId(peerId, startMessageId, count)
-            callback.onResult(messages)
+            val liveData = updateHistory(startMessageId, count)
+            val observer = object : Observer<Boolean> {
+                override fun onChanged(t: Boolean?) {
+                    val observer = this
+                    scope.launch {
+                        val messages = messageDao.getMessagesByPeerId(peerId, startMessageId, count)
+                        callback.onResult(messages)
+                        withContext(Dispatchers.Main) {
+                            liveData.removeObserver(observer)
+                        }
+                    }
+                }
+            }
+            withContext(Dispatchers.Main) {
+                liveData.observeForever(observer)
+            }
         }
     }
 
@@ -59,8 +72,8 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
     override fun getKey(item: Message): Int =
             item.id
 
-    private fun updateHistory(startMessageId: Int, count: Int = 20): ReceiveChannel<Boolean> {
-        val channel = Channel<Boolean>(1)
+    private fun updateHistory(startMessageId: Int, count: Int = 20): LiveData<Boolean> {
+        val liveData = MutableLiveData<Boolean>()
 
         VKApi.messages().getHistory(
             VKParameters(mapOf(
@@ -97,17 +110,17 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
                         }
                     }
 
-                    channel.send(true)
+                    liveData.postValue(true)
                 }
             }
 
             override fun onError(error: VKError) {
 //                _errors.postValue(error)
                 Log.e("MessageDataSource", error.toString())
-                scope.launch { channel.send(false) }
+                liveData.postValue(false)
             }
         })
-        return channel
+        return liveData
     }
 
     class Factory(private val peerId: Int): DataSource.Factory<Int, Message>() {

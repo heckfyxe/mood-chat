@@ -50,7 +50,7 @@ class SearchFragment : androidx.fragment.app.Fragment() {
             hideNotFoundText()
 
             if (it.error != null) {
-                Log.e(TAG, it.error?.apiError?.errorMessage)
+                Log.e(TAG, it.error?.toString() ?: "error")
                 Toast.makeText(activity, R.string.loading_error, Toast.LENGTH_SHORT).show()
                 return@Observer
             }

@@ -41,7 +41,7 @@ class MessagesFragment : Fragment() {
     private val viewModel: MessagesViewModel by inject()
     private val scope = CoroutineScope(Dispatchers.Main)
 
-    private lateinit var conversationDeferred: Deferred<Conversation>
+    private lateinit var conversationDeferred: Deferred<Conversation?>
 
     private var lastMessageId: Int = -1
 
@@ -80,26 +80,27 @@ class MessagesFragment : Fragment() {
 //                }
 //            }
 
-            val title = when(conversation.type) {
+            val title = when (conversation?.type) {
                 VKApiConversation.Type.CHAT ->
                     conversation.chatSettings!!.title
 
                 VKApiConversation.Type.USER, VKApiConversation.Type.EMAIL ->
                     withContext(Dispatchers.IO) {
                         userDao.getUserById(conversation.peerId).let {
-                            it.firstName + "" + it.lastName
+                            it?.firstName + "" + it?.lastName
                         }
                     }
 
                 VKApiConversation.Type.GROUP ->
                     withContext(Dispatchers.IO) {
-                        groupDao.getGroupById(conversation.localId).name
+                        groupDao.getGroupById(conversation.localId)?.name
                     }
+                else -> ""
             }
 
             this@MessagesFragment.activity?.actionBar?.title = title
 
-            val messageAdapter = MessageAdapter(conversation.type == VKApiConversation.Type.CHAT)
+            val messageAdapter = MessageAdapter(conversation?.type == VKApiConversation.Type.CHAT)
             messagesRecyclerView?.apply {
                 layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, true)
                 adapter = messageAdapter

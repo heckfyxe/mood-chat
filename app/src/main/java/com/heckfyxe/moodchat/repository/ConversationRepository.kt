@@ -69,6 +69,9 @@ class ConversationRepository: KoinComponent {
 
                 val localConversationLastMessageSet = HashSet<Int>()
                 val conversationsForDelete = localConversations.filter {
+                    if (it == null)
+                        return@filter false
+
                     localConversationLastMessageSet.add(it.lastMessageId)
                     if (!conversationLastMessageIdSet.contains(it.lastMessageId)) {
                         true

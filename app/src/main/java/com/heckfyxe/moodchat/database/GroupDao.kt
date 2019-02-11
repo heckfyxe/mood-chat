@@ -10,11 +10,11 @@ import com.heckfyxe.moodchat.model.Group
 interface GroupDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(vararg groups: Group)
+    suspend fun insert(vararg groups: Group?)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(groups: List<Group>)
+    suspend fun insert(groups: List<Group?>)
 
     @Query("SELECT * FROM `group` WHERE id = :id LIMIT 1")
-    suspend fun getGroupById(id: Int): Group
+    suspend fun getGroupById(id: Int): Group?
 }

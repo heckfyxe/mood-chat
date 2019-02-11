@@ -28,6 +28,19 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/full_names" />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/lastMessageImageView"
+        android:layout_width="@dimen/last_message_image_view_size"
+        android:layout_height="@dimen/last_message_image_view_size"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/lastMessageTextView"
+        app:layout_constraintStart_toEndOf="@+id/barrier"
+        app:layout_constraintTop_toTopOf="@+id/lastMessageTextView"
+        tools:src="@tools:sample/avatars" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/lastMessageTextView"
         android:layout_width="0dp"
@@ -40,7 +53,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/barrier"
+        app:layout_constraintStart_toEndOf="@+id/lastMessageImageView"
         app:layout_constraintTop_toBottomOf="@+id/conversationNameTextView"
         tools:text="@tools:sample/lorem/random" />
 
@@ -49,7 +62,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="right"
-        app:constraint_referenced_ids="conversationImageView" />
+        app:constraint_referenced_ids="conversationImageView"
+        tools:layout_editor_absoluteX="58dp" />
 
     <View
         android:id="@+id/divider"

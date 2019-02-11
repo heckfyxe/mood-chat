@@ -55,7 +55,9 @@ public class VKApiChatSettings extends VKApiModel implements Parcelable {
                 state = State.LEFT;
                 break;
         }
-        photo = new VKApiPhotos(source.optJSONObject("photo"));
+        if (source.has("photo")) {
+            photo = new VKApiPhotos(source.optJSONObject("photo"));
+        }
         JSONArray activeIdsArray = source.optJSONArray("active_ids");
         for (int i = 0; i < 4; i++) {
             active_ids[i] = activeIdsArray.optInt(i);

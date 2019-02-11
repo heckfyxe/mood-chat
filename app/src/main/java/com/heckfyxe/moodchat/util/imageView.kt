@@ -1,5 +1,6 @@
 package com.heckfyxe.moodchat.util
 
+import android.view.View.VISIBLE
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -21,6 +22,8 @@ fun ImageView.loadUser(user: User) {
         .load(user.photo100)
         .thumbnail(thumbnail)
         .into(this)
+
+    visibility = VISIBLE
 }
 
 fun ImageView.loadGroup(group: Group) {
@@ -36,6 +39,8 @@ fun ImageView.loadGroup(group: Group) {
         .load(group.photo100)
         .thumbnail(thumbnail)
         .into(this)
+
+    visibility = VISIBLE
 }
 
 fun ImageView.loadChat(chat: Conversation.ChatSettings?) {
@@ -51,4 +56,6 @@ fun ImageView.loadChat(chat: Conversation.ChatSettings?) {
         .load(chat?.photo?.photo100)
         .thumbnail(thumbnail)
         .into(this)
+
+    visibility = VISIBLE
 }
