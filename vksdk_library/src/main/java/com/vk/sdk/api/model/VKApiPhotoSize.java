@@ -204,6 +204,9 @@ public class VKApiPhotoSize extends VKApiModel implements Comparable<VKApiPhotoS
         if (!TextUtils.isEmpty(type)) {
             result.type = type.charAt(0);
         }
+        if (TextUtils.isEmpty(result.src) && source.has("url")) {
+            result.src = source.optString("url");
+        }
         // Казалось бы, теперь можно с чистой советью закончить метод.
         // Но нет, оказывается, width и height не просчитывается на некоторых серверах ВК.
         // Приходится гадать на кофейной гуще.

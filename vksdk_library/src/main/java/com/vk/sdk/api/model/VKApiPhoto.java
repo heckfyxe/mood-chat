@@ -210,6 +210,31 @@ public class VKApiPhoto extends VKAttachments.VKApiAttachment implements Parcela
         JSONArray photo_sizes = from.optJSONArray("sizes");
         if (photo_sizes != null) {
             src.fill(photo_sizes);
+            String photo_s = src.getByType(VKApiPhotoSize.S);
+            String photo_m = src.getByType(VKApiPhotoSize.M);
+            String photo_x = src.getByType(VKApiPhotoSize.X);
+            String photo_y = src.getByType(VKApiPhotoSize.Y);
+            String photo_z = src.getByType(VKApiPhotoSize.Z);
+            String photo_w = src.getByType(VKApiPhotoSize.W);
+
+            if (!TextUtils.isEmpty(photo_s)) {
+                photo_75 = photo_s;
+            }
+            if (!TextUtils.isEmpty(photo_m)) {
+                photo_130 = photo_m;
+            }
+            if (!TextUtils.isEmpty(photo_x)) {
+                photo_604 = photo_x;
+            }
+            if (!TextUtils.isEmpty(photo_y)) {
+                photo_807 = photo_y;
+            }
+            if (!TextUtils.isEmpty(photo_z)) {
+                photo_1280 = photo_z;
+            }
+            if (!TextUtils.isEmpty(photo_w)) {
+                photo_2560 = photo_w;
+            }
         } else {
             if (!TextUtils.isEmpty(photo_75)) {
                 src.add(VKApiPhotoSize.create(photo_75, VKApiPhotoSize.S, width, height));
