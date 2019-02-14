@@ -5,7 +5,7 @@ import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
-import com.heckfyxe.moodchat.model.Message
+import com.heckfyxe.moodchat.model.MessageWithAdditional
 import com.heckfyxe.moodchat.repository.MessageRepository
 import com.vk.sdk.api.VKError
 
@@ -14,7 +14,7 @@ class MessagesViewModel : ViewModel() {
 
     lateinit var errors: LiveData<VKError>
 
-    lateinit var pagedList: LiveData<PagedList<Message>>
+    lateinit var pagedList: LiveData<PagedList<MessageWithAdditional>>
 
 //    private val boundaryCallback = object: PagedList.BoundaryCallback<Message>() {
 //        override fun onItemAtFrontLoaded(itemAtFront: Message) {
@@ -29,7 +29,9 @@ class MessagesViewModel : ViewModel() {
     fun init(peerId: Int, lastMessageId: Int) {
         repository = MessageRepository(peerId)
         errors = Transformations.map(repository.errors) { it }
-        pagedList = LivePagedListBuilder<Int, Message>(repository.dataSourceFactory, config)
+        pagedList = LivePagedListBuilder<Int, MessageWithAdditional>(
+                repository.dataSourceFactory,
+                config)
             .setInitialLoadKey(if (lastMessageId != -1) lastMessageId else null)
 //            .setBoundaryCallback(boundaryCallback)
             .build()

@@ -12,6 +12,7 @@ import com.heckfyxe.moodchat.database.MessageDao
 import com.heckfyxe.moodchat.database.UserDao
 import com.heckfyxe.moodchat.model.Group
 import com.heckfyxe.moodchat.model.Message
+import com.heckfyxe.moodchat.model.MessageWithAdditional
 import com.heckfyxe.moodchat.model.User
 import com.vk.sdk.api.*
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,8 @@ import org.json.JSONArray
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
-class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Message>(), KoinComponent {
+class MessageDataSource(private val peerId: Int) : ItemKeyedDataSource<Int, MessageWithAdditional>(),
+        KoinComponent {
 
     private val database: AppDatabase by inject()
     private val messageDao: MessageDao by inject()
@@ -32,16 +34,16 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
     private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun loadInitial(
-        params: LoadInitialParams<Int>,
-        callback: LoadInitialCallback<Message>
+            params: LoadInitialParams<Int>,
+            callback: LoadInitialCallback<MessageWithAdditional>
     ) {
         scope.launch {
-            val message = messageDao.getMessageById(params.requestedInitialKey!!)
+            val message = messageDao.getMessageWithAdditionalById(params.requestedInitialKey!!)
             callback.onResult(listOf(message))
         }
     }
 
-    override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Message>) {
+    override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<MessageWithAdditional>) {
         val startMessageId = params.key
         val count = params.requestedLoadSize
 
@@ -51,7 +53,8 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
                 override fun onChanged(t: Boolean?) {
                     val observer = this
                     scope.launch {
-                        val messages = messageDao.getMessagesByPeerId(peerId, startMessageId, count)
+                        val messages = messageDao
+                                .getMessagesWithAdditionalByPeerId(peerId, startMessageId, count)
                         callback.onResult(messages)
                         withContext(Dispatchers.Main) {
                             liveData.removeObserver(observer)
@@ -65,12 +68,12 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
         }
     }
 
-    override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<Message>) {
+    override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<MessageWithAdditional>) {
 
     }
 
-    override fun getKey(item: Message): Int =
-            item.id
+    override fun getKey(item: MessageWithAdditional): Int =
+            item.message.id
 
     private fun updateHistory(startMessageId: Int, count: Int = 20): LiveData<Boolean> {
         val liveData = MutableLiveData<Boolean>()
@@ -104,7 +107,7 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
                                     Group.create(groups.getJSONObject(it))
                                 })
 
-                            messageDao.insert(List(messages.length()) {
+                            messageDao.insertWithAdditional(List(messages.length()) {
                                 Message.create(messages.getJSONObject(it))
                             })
                         }
@@ -123,8 +126,8 @@ class MessageDataSource(private val peerId: Int): ItemKeyedDataSource<Int, Messa
         return liveData
     }
 
-    class Factory(private val peerId: Int): DataSource.Factory<Int, Message>() {
-        override fun create(): DataSource<Int, Message> =
+    class Factory(private val peerId: Int) : DataSource.Factory<Int, MessageWithAdditional>() {
+        override fun create(): DataSource<Int, MessageWithAdditional> =
             MessageDataSource(peerId)
     }
 }

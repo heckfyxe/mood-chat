@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.heckfyxe.moodchat.R
 import com.heckfyxe.moodchat.database.UserDao
-import com.heckfyxe.moodchat.model.Message
+import com.heckfyxe.moodchat.model.MessageWithAdditional
 import com.heckfyxe.moodchat.model.User
 import com.heckfyxe.moodchat.util.getHHMM
 import com.heckfyxe.moodchat.util.inflate
@@ -21,7 +21,8 @@ import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
 class MessageAdapter(private val isChat: Boolean):
-                PagedListAdapter<Message, MessageAdapter.MessageViewHolder>(DIFF), KoinComponent {
+        PagedListAdapter<MessageWithAdditional, MessageAdapter.MessageViewHolder>(DIFF),
+        KoinComponent {
 
     val userDao: UserDao by inject()
 
@@ -42,9 +43,9 @@ class MessageAdapter(private val isChat: Boolean):
     }
 
     override fun getItemViewType(position: Int): Int {
-        val message = getItem(position)!!
+        val messageWithAdditional = getItem(position)!!
 
-        if (message.out)
+        if (messageWithAdditional.message.out)
             return OUT_MESSAGE_VIEW_TYPE
 
         return when (isChat) {
@@ -54,22 +55,24 @@ class MessageAdapter(private val isChat: Boolean):
     }
 
     inner class MessageViewHolder(view: View): RecyclerView.ViewHolder(view) {
-        fun bind(message: Message) {
+        fun bind(messageWithAdditional: MessageWithAdditional) {
             itemView.apply {
-                if (isChat && !message.out) {
-                    scope.launch {
-                        val user: User? = withContext(Dispatchers.IO) {
-                            userDao.getUserById(message.fromId)
-                        }
-                        user ?: return@launch
+                messageWithAdditional.message.also { message ->
+                    if (isChat && !message.out) {
+                        scope.launch {
+                            val user: User? = withContext(Dispatchers.IO) {
+                                userDao.getUserById(message.fromId)
+                            }
+                            user ?: return@launch
 
-                        messageAvatar?.loadUser(user)
-                        messageUsername?.text = user.firstName
+                            messageAvatar?.loadUser(user)
+                            messageUsername?.text = user.firstName
+                        }
                     }
+                    messageText?.text = message.text
+                    val time = getHHMM(message.date)
+                    messageTime?.text = time
                 }
-                messageText?.text = message.text
-                val time = getHHMM(message.date)
-                messageTime?.text = time
             }
         }
     }
@@ -79,11 +82,13 @@ class MessageAdapter(private val isChat: Boolean):
         private const val OUT_MESSAGE_VIEW_TYPE = 1
         private const val IN_CHAT_MESSAGE_VIEW_TYPE = 2
 
-        private val DIFF = object: DiffUtil.ItemCallback<Message>() {
-            override fun areItemsTheSame(oldItem: Message, newItem: Message) =
-                oldItem.id == newItem.id
+        private val DIFF = object : DiffUtil.ItemCallback<MessageWithAdditional>() {
+            override fun areItemsTheSame(oldItem: MessageWithAdditional,
+                                         newItem: MessageWithAdditional) =
+                    oldItem.message.id == newItem.message.id
 
-            override fun areContentsTheSame(oldItem: Message, newItem: Message) =
+            override fun areContentsTheSame(oldItem: MessageWithAdditional,
+                                            newItem: MessageWithAdditional) =
                 oldItem == newItem
         }
     }

@@ -99,7 +99,7 @@ class ConversationRepository: KoinComponent {
                             insert(conversationsForInsert)
                         }
 
-                        messageDao.insert(messages)
+                        messageDao.insertWithAdditional(messages)
                         userDao.insert(profilesDef ?: emptyList())
                         groupDao.insert(groupsDef ?: emptyList())
                     }

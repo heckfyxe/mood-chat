@@ -10,7 +10,7 @@ import com.vk.sdk.api.VKError
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
-class MessageRepository(private val peerId: Int): KoinComponent {
+class MessageRepository(peerId: Int) : KoinComponent {
     private val messageDao: MessageDao by inject()
     private val userDao: UserDao by inject()
     private val groupDao: GroupDao by inject()

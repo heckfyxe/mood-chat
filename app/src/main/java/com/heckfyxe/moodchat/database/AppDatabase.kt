@@ -5,13 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.heckfyxe.moodchat.model.Conversation
-import com.heckfyxe.moodchat.model.Group
-import com.heckfyxe.moodchat.model.Message
-import com.heckfyxe.moodchat.model.User
+import com.heckfyxe.moodchat.model.*
 
 @Database(
-    entities = [Conversation::class, User::class, Message::class, Group::class],
+        entities = [Conversation::class, User::class, Message::class, Group::class, Attachment::class, Photo::class],
     version = 1,
     exportSchema = false
 )

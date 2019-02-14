@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Ignore
 import androidx.room.Index
 import com.vk.sdk.api.model.VKApiMessage
+import com.vk.sdk.api.model.VKApiPhoto
 import com.vk.sdk.api.model.VKAttachments
 import com.vk.sdk.api.model.VKList
 import org.json.JSONObject
@@ -32,7 +33,7 @@ data class Message(
         var out: Boolean = false,
 
         @Ignore
-        var attachments: VKAttachments? = null,
+        var attachments: List<Attachment>? = null,
 
         var important: Boolean = false,
 
@@ -47,18 +48,28 @@ data class Message(
                 create(VKApiMessage(source))
 
         @JvmStatic
-        fun create(message: VKApiMessage) =
-                Message(
-                        id = message.id,
-                        date = message.date,
-                        peerId = message.peer_id,
-                        fromId = message.from_id,
-                        text = message.text,
-                        randomId = message.random_id,
-                        out = message.out,
-                        attachments = message.attachments,
-                        important = message.important,
-                        fwdMessages = message.fwd_messages,
-                        conversationMessageId = message.conversation_message_id)
+        @Suppress("IMPLICIT_CAST_TO_ANY")
+        fun create(message: VKApiMessage): Message {
+            var list: List<Attachment>? = null
+            if (message.attachments.isNotEmpty()) {
+                list = message.attachments.flatMap {
+                    if (it.type == VKAttachments.TYPE_PHOTO) {
+                        listOf(Photo.create(it as VKApiPhoto))
+                    } else listOf()
+                }
+            }
+            return Message(
+                    id = message.id,
+                    date = message.date,
+                    peerId = message.peer_id,
+                    fromId = message.from_id,
+                    text = message.text,
+                    randomId = message.random_id,
+                    out = message.out,
+                    attachments = list,
+                    important = message.important,
+                    fwdMessages = message.fwd_messages,
+                    conversationMessageId = message.conversation_message_id)
+        }
     }
 }
