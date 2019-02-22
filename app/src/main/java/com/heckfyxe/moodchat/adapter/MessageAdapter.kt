@@ -2,17 +2,18 @@ package com.heckfyxe.moodchat.adapter
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.heckfyxe.moodchat.R
 import com.heckfyxe.moodchat.database.UserDao
+import com.heckfyxe.moodchat.databinding.ItemChatInMessageBinding
+import com.heckfyxe.moodchat.databinding.ItemInMessageBinding
+import com.heckfyxe.moodchat.databinding.ItemOutMessageBinding
 import com.heckfyxe.moodchat.model.MessageWithAdditional
 import com.heckfyxe.moodchat.model.User
-import com.heckfyxe.moodchat.util.getHHMM
 import com.heckfyxe.moodchat.util.inflate
-import com.heckfyxe.moodchat.util.loadUser
-import kotlinx.android.synthetic.main.item_chat_in_message.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,15 +29,17 @@ class MessageAdapter(private val isChat: Boolean):
 
     val scope = CoroutineScope(Dispatchers.Main)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val view = when (viewType) {
-            IN_MESSAGE_VIEW_TYPE -> inflate(parent, R.layout.item_in_message)
-            OUT_MESSAGE_VIEW_TYPE -> inflate(parent, R.layout.item_out_message)
-            IN_CHAT_MESSAGE_VIEW_TYPE -> inflate(parent, R.layout.item_chat_in_message)
-            else -> throw Exception("Unknown ViewType")
-        }
-        return MessageViewHolder(view)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):
+            MessageViewHolder =
+            when (viewType) {
+                IN_MESSAGE_VIEW_TYPE ->
+                    InMessageViewHolder(inflate(parent, R.layout.item_in_message))
+                OUT_MESSAGE_VIEW_TYPE ->
+                    OutMessageViewHolder(inflate(parent, R.layout.item_out_message))
+                IN_CHAT_MESSAGE_VIEW_TYPE ->
+                    InChatMessageViewHolder(inflate(parent, R.layout.item_chat_in_message))
+                else -> throw Exception("Unknown ViewType")
+            }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         holder.bind(getItem(position)!!)
@@ -54,24 +57,46 @@ class MessageAdapter(private val isChat: Boolean):
         }
     }
 
-    inner class MessageViewHolder(view: View): RecyclerView.ViewHolder(view) {
-        fun bind(messageWithAdditional: MessageWithAdditional) {
+    abstract inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        abstract fun bind(messageWithAdditional: MessageWithAdditional)
+    }
+
+    inner class OutMessageViewHolder(view: View) : MessageViewHolder(view) {
+        override fun bind(messageWithAdditional: MessageWithAdditional) {
             itemView.apply {
                 messageWithAdditional.message.also { message ->
-                    if (isChat && !message.out) {
-                        scope.launch {
-                            val user: User? = withContext(Dispatchers.IO) {
-                                userDao.getUserById(message.fromId)
-                            }
-                            user ?: return@launch
+                    val binding = DataBindingUtil.bind<ItemOutMessageBinding>(itemView)
+                    binding?.message = message
+                }
+            }
+        }
+    }
 
-                            messageAvatar?.loadUser(user)
-                            messageUsername?.text = user.firstName
+    inner class InMessageViewHolder(view: View) : MessageViewHolder(view) {
+        override fun bind(messageWithAdditional: MessageWithAdditional) {
+            itemView.apply {
+                messageWithAdditional.message.also { message ->
+                    val binding = DataBindingUtil.bind<ItemInMessageBinding>(itemView)
+                    binding?.message = message
+                }
+            }
+        }
+    }
+
+    inner class InChatMessageViewHolder(view: View) : MessageViewHolder(view) {
+        override fun bind(messageWithAdditional: MessageWithAdditional) {
+            itemView.apply {
+                messageWithAdditional.message.also { message ->
+                    val binding = DataBindingUtil.bind<ItemChatInMessageBinding>(itemView)
+                    scope.launch {
+                        val user: User? = withContext(Dispatchers.IO) {
+                            userDao.getUserById(message.fromId)
                         }
+                        user ?: return@launch
+
+                        binding?.user = user
                     }
-                    messageText?.text = message.text
-                    val time = getHHMM(message.date)
-                    messageTime?.text = time
+                    binding?.message = message
                 }
             }
         }
